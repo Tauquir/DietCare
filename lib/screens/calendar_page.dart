@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'meal_selection_page.dart';
+import 'account_page.dart';
 
 class CalendarPage extends StatefulWidget {
   const CalendarPage({super.key});
@@ -14,24 +16,31 @@ class _CalendarPageState extends State<CalendarPage> {
 
   final List<String> _weekDays = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
-  // Mock data for meal status
+  // Mock data for meal status - matching the image
   final Map<int, String> _mealStatus = {
-    8: 'delivered',
-    9: 'delivered',
-    10: 'delivered',
-    11: 'delivered',
-    12: 'delivered',
+    8: 'selected',
+    9: 'selected',
+    10: 'selected',
+    11: 'selected',
+    12: 'selected',
     13: 'preparing',
     14: 'preparing',
     15: 'preparing',
     16: 'paused',
     17: 'paused',
     18: 'paused',
-    19: 'delivered',
-    20: 'selected',
-    21: 'selected',
+    19: 'selected',
+    20: 'delivered',
+    21: 'delivered',
     22: 'choose',
   };
+
+  // Get the day of week for the first day of the month (0=Sunday, 6=Saturday)
+  int _getFirstDayOfWeek() {
+    DateTime firstDay = DateTime(_currentYear, 10, 1);
+    // October 1, 2025 is a Wednesday (day 3)
+    return 3;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,138 +49,95 @@ class _CalendarPageState extends State<CalendarPage> {
       body: SafeArea(
         child: Column(
           children: [
-            // Custom Header
+            // Orange Header
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: Column(
+              padding: const EdgeInsets.only(top: 40, bottom: 20, left: 20, right: 20),
+              decoration: const BoxDecoration(
+                color: Color(0xFFFF6B35),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  // Left side - CALENDAR label and month/year
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        '9:41',
+                        'CALENDAR',
                         style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
+                          color: Color(0xFF9E9E9E),
+                          fontSize: 12,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
+                      const SizedBox(height: 4),
                       Row(
                         children: [
-                          Container(
-                            width: 4,
-                            height: 4,
-                            decoration: const BoxDecoration(
+                          Text(
+                            '$_currentMonth, $_currentYear',
+                            style: const TextStyle(
                               color: Colors.white,
-                              shape: BoxShape.circle,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                          const SizedBox(width: 2),
-                          Container(
-                            width: 4,
-                            height: 4,
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 2),
-                          Container(
-                            width: 4,
-                            height: 4,
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                            ),
+                          const SizedBox(width: 8),
+                          const Icon(
+                            Icons.keyboard_arrow_down,
+                            color: Colors.white,
+                            size: 20,
                           ),
                         ],
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'CALENDAR',
+                  // Right side - 3D calendar icon
+                  Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      color: Colors.lightBlue,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Stack(
+                      children: [
+                        const Center(
+                          child: Text(
+                            '15',
                             style: TextStyle(
-                              color: Color(0xFF9E9E9E),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Text(
-                                '$_currentMonth, $_currentYear',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              const Icon(
-                                Icons.keyboard_arrow_down,
-                                color: Colors.white,
-                                size: 20,
-                              ),
-                            ],
+                        ),
+                        Positioned(
+                          top: 4,
+                          right: 4,
+                          child: Container(
+                            width: 16,
+                            height: 16,
+                            decoration: const BoxDecoration(
+                              color: Colors.green,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.check,
+                              color: Colors.white,
+                              size: 10,
+                            ),
                           ),
-                        ],
-                      ),
-                      Container(
-                        width: 60,
-                        height: 60,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF2A2A2A),
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.3),
-                              blurRadius: 8,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
                         ),
-                        child: Stack(
-                          children: [
-                            const Center(
-                              child: Text(
-                                '15',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                            Positioned(
-                              top: 4,
-                              right: 4,
-                              child: Container(
-                                width: 16,
-                                height: 16,
-                                decoration: const BoxDecoration(
-                                  color: Colors.green,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.check,
-                                  color: Colors.white,
-                                  size: 10,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -215,47 +181,72 @@ class _CalendarPageState extends State<CalendarPage> {
                         ),
                         itemCount: 35, // 5 weeks * 7 days
                         itemBuilder: (context, index) {
-                          int dayNumber = index - 6; // Start from day 1
+                          int firstDayOfWeek = _getFirstDayOfWeek();
+                          int dayNumber = index - firstDayOfWeek + 1;
                           
+                          // Check if this is an empty cell (before day 1 or after day 30)
                           if (dayNumber < 1 || dayNumber > 30) {
-                            return const SizedBox(); // Empty space
+                            return Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            );
                           }
                           
                           String status = _mealStatus[dayNumber] ?? 'empty';
                           
                           return GestureDetector(
                             onTap: () {
-                              setState(() {
-                                _selectedDate = DateTime(_currentYear, 10, dayNumber);
-                              });
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => MealSelectionPage(
+                                    selectedDate: DateTime(_currentYear, 10, dayNumber),
+                                  ),
+                                ),
+                              );
                             },
                             child: Container(
                               decoration: BoxDecoration(
-                                color: _getDayColor(status),
+                                color: status == 'empty' 
+                                    ? Colors.transparent
+                                    : const Color(0xFF2A2A2A),
                                 borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: status == 'empty' 
+                                      ? const Color(0xFF3A3A3A)
+                                      : Colors.transparent,
+                                  width: 1,
+                                ),
                               ),
-                              child: Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      dayNumber.toString(),
-                                      style: TextStyle(
-                                        color: _getTextColor(status),
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  if (status != 'empty')
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 4),
+                                      child: _buildMealStatusIcon(status),
+                                    )
+                                  else
+                                    const SizedBox(height: 20),
+                                  Expanded(
+                                    child: Align(
+                                      alignment: Alignment.bottomCenter,
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(bottom: 4),
+                                        child: Text(
+                                          dayNumber.toString(),
+                                          style: TextStyle(
+                                            color: status == 'empty' 
+                                                ? const Color(0xFF9E9E9E)
+                                                : Colors.white,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
                                       ),
                                     ),
-                                    if (status != 'empty') ...[
-                                      const SizedBox(height: 2),
-                                      Icon(
-                                        _getStatusIcon(status),
-                                        color: Colors.white,
-                                        size: 12,
-                                      ),
-                                    ],
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
                             ),
                           );
@@ -322,15 +313,15 @@ class _CalendarPageState extends State<CalendarPage> {
                   const SizedBox(height: 16),
                   
                   // Legend Items
-                  _buildLegendItem('Choose a Meal', Icons.touch_app, const Color(0xFFFF6B35)),
+                  _buildLegendItem('Choose a Meal', _buildMealStatusIcon('choose')),
                   const SizedBox(height: 8),
-                  _buildLegendItem('Meal Selected', Icons.check_circle, Colors.white),
+                  _buildLegendItem('Meal Selected', _buildMealStatusIcon('selected')),
                   const SizedBox(height: 8),
-                  _buildLegendItem('Paused Meal', Icons.pause, const Color(0xFF9E9E9E)),
+                  _buildLegendItem('Paused Meal', _buildMealStatusIcon('paused')),
                   const SizedBox(height: 8),
-                  _buildLegendItem('Preparing Meal', Icons.restaurant, Colors.red),
+                  _buildLegendItem('Preparing Meal', _buildMealStatusIcon('preparing')),
                   const SizedBox(height: 8),
-                  _buildLegendItem('Meal Delivered', Icons.local_shipping, Colors.blue),
+                  _buildLegendItem('Meal Delivered', _buildMealStatusIcon('delivered')),
                 ],
               ),
             ),
@@ -358,13 +349,13 @@ class _CalendarPageState extends State<CalendarPage> {
     );
   }
 
-  Widget _buildLegendItem(String label, IconData icon, Color color) {
+  Widget _buildLegendItem(String label, Widget iconWidget) {
     return Row(
       children: [
-        Icon(
-          icon,
-          color: color,
-          size: 16,
+        SizedBox(
+          width: 20,
+          height: 20,
+          child: iconWidget,
         ),
         const SizedBox(width: 8),
         Text(
@@ -384,7 +375,11 @@ class _CalendarPageState extends State<CalendarPage> {
         if (label == 'PLANS') {
           Navigator.of(context).pushReplacementNamed('/');
         } else if (label == 'ACCOUNT') {
-          // Navigate to account page
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const AccountPage(),
+            ),
+          );
         }
       },
       child: Column(
@@ -409,47 +404,87 @@ class _CalendarPageState extends State<CalendarPage> {
     );
   }
 
-  Color _getDayColor(String status) {
+  Widget _buildMealStatusIcon(String status) {
     switch (status) {
-      case 'delivered':
-        return Colors.blue;
+      case 'selected':
+        // Meal bag with green checkmark
+        return Stack(
+          children: [
+            const Icon(
+              Icons.shopping_bag,
+              color: Color(0xFF9E9E9E),
+              size: 20,
+            ),
+            Positioned(
+              top: -2,
+              right: -2,
+              child: Container(
+                width: 8,
+                height: 8,
+                decoration: const BoxDecoration(
+                  color: Colors.green,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.check,
+                  color: Colors.white,
+                  size: 6,
+                ),
+              ),
+            ),
+          ],
+        );
       case 'preparing':
-        return Colors.red;
+        // Red cloche with heat waves
+        return const Icon(
+          Icons.restaurant,
+          color: Colors.red,
+          size: 20,
+        );
       case 'paused':
-        return const Color(0xFF9E9E9E);
-      case 'selected':
-        return Colors.white;
-      case 'choose':
-        return Colors.white;
-      default:
-        return const Color(0xFF2A2A2A);
-    }
-  }
-
-  Color _getTextColor(String status) {
-    switch (status) {
-      case 'selected':
-      case 'choose':
-        return Colors.black;
-      default:
-        return Colors.white;
-    }
-  }
-
-  IconData _getStatusIcon(String status) {
-    switch (status) {
+        // Gray pause icon
+        return const Icon(
+          Icons.pause,
+          color: Color(0xFF9E9E9E),
+          size: 20,
+        );
       case 'delivered':
-        return Icons.local_shipping;
-      case 'preparing':
-        return Icons.restaurant;
-      case 'paused':
-        return Icons.pause;
-      case 'selected':
-        return Icons.check_circle;
+        // White cloche with green checkmark
+        return Stack(
+          children: [
+            const Icon(
+              Icons.restaurant,
+              color: Colors.white,
+              size: 20,
+            ),
+            Positioned(
+              top: -2,
+              right: -2,
+              child: Container(
+                width: 8,
+                height: 8,
+                decoration: const BoxDecoration(
+                  color: Colors.green,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.check,
+                  color: Colors.white,
+                  size: 6,
+                ),
+              ),
+            ),
+          ],
+        );
       case 'choose':
-        return Icons.touch_app;
+        // Orange hand tapping icon
+        return const Icon(
+          Icons.touch_app,
+          color: Color(0xFFFF6B35),
+          size: 20,
+        );
       default:
-        return Icons.circle;
+        return const SizedBox();
     }
   }
 }

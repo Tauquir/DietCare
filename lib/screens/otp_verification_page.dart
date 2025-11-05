@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'set_password_page.dart';
 
 class OtpVerificationPage extends StatefulWidget {
   final String phoneNumber;
+  final String? userId; // Optional userId from send-OTP response
   
   const OtpVerificationPage({
     super.key,
     required this.phoneNumber,
+    this.userId,
   });
 
   @override
@@ -115,83 +118,115 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
         ),
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            children: [
-              const SizedBox(height: 40),
-              // Central Icon
-              Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2A2A2A),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.sms,
-                  color: Color(0xFFFF6B35),
-                  size: 60,
+        child: Stack(
+          children: [
+            // Central Icon positioned absolutely
+            Positioned(
+              top: 101,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: SvgPicture.asset(
+                  'assets/verifynumber.svg',
+                  width: 125,
+                  height: 125,
                 ),
               ),
-              const SizedBox(height: 32),
-              // Title
-              const Text(
-                'Verify Your Number',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              // Instructions
-              Text(
-                'Enter the OTP we sent to your phone to continue.',
-                style: const TextStyle(
-                  color: Color(0xFF9E9E9E),
-                  fontSize: 16,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 48),
-              // OTP Input Fields
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: List.generate(4, (index) {
-                  return Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF2A2A2A),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: _controllers[index].text.isNotEmpty 
-                            ? const Color(0xFFFF6B35) 
-                            : const Color(0xFF3A3A3A),
-                        width: 2,
-                      ),
+            ),
+            // Title positioned absolutely
+            Positioned(
+              top: 251,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  width: 256,
+                  height: 28,
+                  child: const Text(
+                    'Verify Your Number',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 26,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'Onest',
+                      height: 0.82, // line-height: 21.44px / font-size: 26px
+                      letterSpacing: 0.0,
                     ),
-                    child: TextField(
-                      controller: _controllers[index],
-                      focusNode: _focusNodes[index],
-                      textAlign: TextAlign.center,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                        LengthLimitingTextInputFormatter(1),
-                      ],
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            ),
+            // Instructions positioned absolutely
+            Positioned(
+              top: 287,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  width: 370,
+                  height: 22,
+                  child: const Text(
+                    'Enter the OTP we sent to your phone to continue.',
+                    style: TextStyle(
+                      color: Color(0xFF9E9E9E),
+                      fontSize: 15,
+                      fontWeight: FontWeight.w400,
+                      fontFamily: 'Onest',
+                      height: 1.43, // line-height: 21.44px / font-size: 15px
+                      letterSpacing: 0.0,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            ),
+            // Rest of the content
+            Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                children: [
+                  const SizedBox(height: 300), // Space for positioned elements
+               // OTP Input Fields
+               Row(
+                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                 children: List.generate(4, (index) {
+                   return Container(
+                     width: 82.93103790283203,
+                     height: 62,
+                     decoration: BoxDecoration(
+                       color: const Color(0xFF2A2A2A),
+                       borderRadius: BorderRadius.circular(12.56),
+                       border: Border.all(
+                         color: _controllers[index].text.isNotEmpty 
+                             ? const Color(0xFFFF6B35) 
+                             : const Color(0xFF7A7A7A),
+                         width: 1.26,
+                       ),
+                     ),
+                    child: Center(
+                      child: TextField(
+                        controller: _controllers[index],
+                        focusNode: _focusNodes[index],
+                        textAlign: TextAlign.center,
+                        textAlignVertical: TextAlignVertical.center,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(1),
+                        ],
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        decoration: const InputDecoration(
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.zero,
+                          isDense: true,
+                        ),
+                        onChanged: (value) => _onTextChanged(value, index),
                       ),
-                      decoration: const InputDecoration(
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                      onChanged: (value) => _onTextChanged(value, index),
                     ),
                   );
                 }),
@@ -218,8 +253,10 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
                 ),
               ),
               const Spacer(),
-            ],
-          ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );

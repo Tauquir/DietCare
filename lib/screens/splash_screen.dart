@@ -26,15 +26,47 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFF6B35), // Orange background color
-      body: Center(
-        child: SvgPicture.asset(
-          'assets/logo.svg',
-          width: 300,
-          height: 300,
-          colorFilter: const ColorFilter.mode(
-            Colors.white,
-            BlendMode.srcIn,
+      body: Container(
+        width: 640,
+        height: 1382,
+        decoration: const BoxDecoration(
+          color: Color(0xFF1B1B1B), // #1B1B1B
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 161.48046875,
+                height: 162.58837890625,
+                decoration: BoxDecoration(
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFFF5504).withOpacity(0.0),
+                      blurRadius: 25.13,
+                      spreadRadius: 0.63,
+                      offset: const Offset(0, 0),
+                    ),
+                  ],
+                ),
+                child: SvgPicture.asset(
+                  'assets/newlogo.svg',
+                  width: 161.48046875,
+                  height: 162.58837890625,
+                ),
+              ),
+              const SizedBox(height: 0),
+              const Text(
+                'soaraat',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 52,
+                  fontWeight: FontWeight.bold,
+                  height: 1.0, // Exact line height to match letter height
+                  letterSpacing: 0.0,
+                ),
+              ),
+            ],
           ),
         ),
       ),
