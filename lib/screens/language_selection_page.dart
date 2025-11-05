@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'login_page.dart';
 
 class LanguageSelectionPage extends StatefulWidget {
@@ -20,34 +21,45 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
           padding: const EdgeInsets.all(24.0),
           child: Column(
             children: [
-              const SizedBox(height: 40),
+              const SizedBox(height: 125),
               // Language Icon
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2A2A2A),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFF3A3A3A), width: 1),
-                ),
-                child: const Icon(
-                  Icons.translate,
-                  color: Color(0xFFFF6B35),
-                  size: 40,
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 138),
+                  child: SvgPicture.asset(
+                    'assets/chooselanguage.svg',
+                    width: 125,
+                    height: 125,
+                  ),
                 ),
               ),
               const SizedBox(height: 32),
               // Title
-              const Text(
-                'Choose Your Language',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 52),
+                  child: Container(
+                    width: 297,
+                    child: const Text(
+                      'Choose Your Language',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        height: 1.0, // Reduced line height to minimize spacing
+                        letterSpacing: 0.0,
+                        fontFamily: 'Onest',
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.visible,
+                    ),
+                  ),
                 ),
-                textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 8),
               // Subtitle
               const Text(
                 'Select your preferred language for the app, you can adjust it later as well.',
@@ -92,17 +104,18 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
               ),
               const Spacer(),
               // Continue Button
-              Container(
-                width: double.infinity,
-                height: 56,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFFF6B35), Color(0xFFE55A2B)],
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                ),
+              Center(
+                child: Container(
+                    width: 370,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFFE8347), Color(0xFFA43B08)],
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                      ),
+                      borderRadius: BorderRadius.circular(25.13),
+                    ),
                 child: ElevatedButton(
                   onPressed: () {
                     // Navigate to login screen
@@ -114,7 +127,7 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
                     backgroundColor: Colors.transparent,
                     shadowColor: Colors.transparent,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(25.13),
                     ),
                   ),
                   child: const Text(
@@ -126,6 +139,7 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
                       letterSpacing: 1.2,
                     ),
                   ),
+                ),
                 ),
               ),
               const SizedBox(height: 24),

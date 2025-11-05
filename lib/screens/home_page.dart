@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'menu_page.dart';
 import 'subscription_page.dart';
 import 'calendar_page.dart';
+import 'account_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -39,26 +40,24 @@ class _HomePageState extends State<HomePage> {
           // Top Header (Orange Background)
           Container(
             width: double.infinity,
-            height: 140,
+            padding: const EdgeInsets.only(top: 40.0, bottom: 20.0),
             decoration: const BoxDecoration(
               color: Color(0xFFFF6B35),
             ),
-            child: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 16),
-                    // Slogan
-                    const Column(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: Row(
+                children: [
+                  // Slogan on the left
+                  const Expanded(
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           'Effortless',
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 18,
+                            fontSize: 28,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -66,57 +65,148 @@ class _HomePageState extends State<HomePage> {
                           'Healthy Eating!',
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 18,
+                            fontSize: 28,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    // Background meal images (empty placeholders)
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
+                  ),
+                  // Food collage placeholder on the right
+                  Container(
+                    width: 120,
+                    height: 80,
+                    child: Stack(
                       children: [
-                        Container(
-                          width: 20,
-                          height: 20,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.3),
-                            borderRadius: BorderRadius.circular(3),
+                        // Placeholder for food images - user will add images later
+                        Positioned(
+                          right: 40,
+                          top: 10,
+                          child: Container(
+                            width: 35,
+                            height: 35,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
                           ),
                         ),
-                        const SizedBox(width: 3),
-                        Container(
-                          width: 20,
-                          height: 20,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.3),
-                            borderRadius: BorderRadius.circular(3),
+                        Positioned(
+                          right: 20,
+                          top: 25,
+                          child: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
                           ),
                         ),
-                        const SizedBox(width: 3),
-                        Container(
-                          width: 20,
-                          height: 20,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.3),
-                            borderRadius: BorderRadius.circular(3),
+                        Positioned(
+                          right: 10,
+                          top: 45,
+                          child: Container(
+                            width: 35,
+                            height: 35,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
                           ),
                         ),
-                        const SizedBox(width: 3),
-                        Container(
-                          width: 20,
-                          height: 20,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.3),
-                            borderRadius: BorderRadius.circular(3),
+                        Positioned(
+                          right: 50,
+                          top: 50,
+                          child: Container(
+                            width: 55,
+                            height: 55,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.3),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
                           ),
                         ),
                       ],
                     ),
-                    const Spacer(),
-                  ],
-                ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // "Need help choosing" Card
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
+            child: Container(
+              padding: const EdgeInsets.all(16.0),
+              decoration: BoxDecoration(
+                color: const Color(0xFF2A2A2A),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  // Left side - Text content
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'Need help choosing\nthe right meal?',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        const Text(
+                          'Set goals & design your meal plan!',
+                          style: TextStyle(
+                            color: Color(0xFF9E9E9E),
+                            fontSize: 12,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        GestureDetector(
+                          onTap: () {
+                            // Handle navigation
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFF6B35),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Text(
+                              'Let\'s Go',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  // Right side - Professional image placeholder
+                  Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF3A3A3A),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.medical_services,
+                      color: Color(0xFF9E9E9E),
+                      size: 40,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -124,26 +214,10 @@ class _HomePageState extends State<HomePage> {
           Expanded(
             child: SingleChildScrollView(
               child: Padding(
-                padding: const EdgeInsets.all(24.0),
+                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Hero Image Card (Empty placeholder)
-                    Container(
-                      width: double.infinity,
-                      height: 130,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF2A2A2A),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Container(
-                          color: const Color(0xFF3A3A3A),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
                     // Category Navigation
                     SizedBox(
                       height: 40,
@@ -168,7 +242,7 @@ class _HomePageState extends State<HomePage> {
                                         color: _selectedCategoryIndex == index
                                             ? const Color(0xFFFF6B35)
                                             : const Color(0xFF9E9E9E),
-                                        size: 16,
+                                        size: 18,
                                       ),
                                       const SizedBox(width: 6),
                                       Text(
@@ -203,7 +277,7 @@ class _HomePageState extends State<HomePage> {
                         },
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
                      // Meal Plan Cards
                      SizedBox(
                        height: 380,
@@ -287,19 +361,26 @@ class _HomePageState extends State<HomePage> {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       const SizedBox(height: 6),
-                                      // Nutritional Information
+                                      // Nutritional Information with vertical dividers
                                       Row(
+                                        mainAxisAlignment: MainAxisAlignment.start,
                                         children: [
                                           _buildNutritionItem('Protein', '21g'),
-                                          const SizedBox(width: 10),
+                                          Container(
+                                            width: 1,
+                                            height: 20,
+                                            color: const Color(0xFF9E9E9E),
+                                            margin: const EdgeInsets.symmetric(horizontal: 8),
+                                          ),
                                           _buildNutritionItem('Carbs', '60g'),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 6),
-                                      Row(
-                                        children: [
+                                          Container(
+                                            width: 1,
+                                            height: 20,
+                                            color: const Color(0xFF9E9E9E),
+                                            margin: const EdgeInsets.symmetric(horizontal: 8),
+                                          ),
                                           _buildNutritionItem('Fat', '15g'),
-                                          const SizedBox(width: 10),
+                                          const SizedBox(width: 8),
                                           Container(
                                             padding: const EdgeInsets.symmetric(
                                               horizontal: 6, 
@@ -320,7 +401,7 @@ class _HomePageState extends State<HomePage> {
                                           ),
                                         ],
                                       ),
-                                      const SizedBox(height: 6),
+                                      const SizedBox(height: 10),
                                       // Includes Section
                                       const Text(
                                         'INCLUDES',
@@ -452,16 +533,18 @@ class _HomePageState extends State<HomePage> {
         Text(
           label,
           style: const TextStyle(
-            color: Color(0xFF9E9E9E),
-            fontSize: 8,
+            color: Colors.white,
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
           ),
         ),
+        const SizedBox(height: 2),
         Text(
           value,
           style: const TextStyle(
             color: Colors.white,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
           ),
         ),
       ],
@@ -475,10 +558,10 @@ class _HomePageState extends State<HomePage> {
         children: [
           const Icon(
             Icons.check,
-            color: Color(0xFFFF6B35),
-            size: 12,
+            color: Colors.green,
+            size: 14,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
           Text(
             text,
             style: const TextStyle(
@@ -507,7 +590,11 @@ class _HomePageState extends State<HomePage> {
             ),
           );
         } else if (label == 'ACCOUNT') {
-          // Navigate to account page when implemented
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const AccountPage(),
+            ),
+          );
         }
       },
       child: Column(
