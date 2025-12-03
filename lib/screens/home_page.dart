@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'dart:developer' as developer;
 import 'menu_page.dart';
 import 'subscription_page.dart';
 import 'calendar_page.dart';
 import 'account_page.dart';
+import 'goal_selection_page.dart';
+import '../widgets/meal_plan_card.dart';
+import '../widgets/bottom_navigation_bar.dart';
+import '../services/language_service.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -16,20 +21,151 @@ class _HomePageState extends State<HomePage> {
   int _selectedCategoryIndex = 0;
   int _selectedBottomNavIndex = 0;
   int _currentCardIndex = 1; // Start with center card focused
+  final PageController _pageController = PageController(
+    viewportFraction: 0.75,
+    initialPage: 1,
+  );
+  final LanguageService _languageService = LanguageService();
 
-  final List<String> _categories = [
+  // Translations
+  Map<String, Map<String, String>> _translations = {
+    'English': {
+      'headerLine1': 'Effortless',
+      'headerLine2': 'Healthy Eating!',
+      'helpTitle': 'Need help choosing the right meal?',
+      'helpSubtitle': 'Set goals & design your meal plan!',
+      'letsGo': 'Let\'s Go',
+      'dietPlans': 'Diet Plans',
+      'healthy': 'Healthy',
+      'lifestyle': 'Lifestyle',
+      'gainMuscle': 'Gain Muscle',
+      'zenMealPlan': 'Zen Meal Plan',
+      'zenSubtitle': 'For steady, visible progress.',
+      'breakfast': 'Breakfast',
+      'mainCourse': 'Main Course',
+      'soupSnack': 'Soup & Snack',
+      'saladDrink': 'Salad & Drink',
+    },
+    'Arabic': {
+      'headerLine1': 'تناول طعام',
+      'headerLine2': 'صحي بسهولة!',
+      'helpTitle': 'تحتاج مساعدة في اختيار الوجبة المناسبة؟',
+      'helpSubtitle': 'حدد الأهداف وصمم خطة وجباتك!',
+      'letsGo': 'هيا بنا',
+      'dietPlans': 'خطط النظام الغذائي',
+      'healthy': 'صحي',
+      'lifestyle': 'نمط الحياة',
+      'gainMuscle': 'اكتساب العضلات',
+      'zenMealPlan': 'خطة وجبات زن',
+      'zenSubtitle': 'للتقدم المستمر والمرئي.',
+      'breakfast': 'إفطار',
+      'mainCourse': 'طبق رئيسي',
+      'soupSnack': 'شوربة ووجبة خفيفة',
+      'saladDrink': 'سلطة ومشروب',
+    },
+  };
+
+  String _getText(String key) {
+    return _translations[_languageService.currentLanguage]?[key] ?? _translations['English']![key]!;
+  }
+
+  bool get _isRTL => _languageService.isRTL;
+
+  List<String> get _categories => _isRTL ? [
+    _getText('dietPlans'),
+    _getText('healthy'),
+    _getText('lifestyle'),
+    _getText('gainMuscle'),
+  ] : [
     'Diet Plans',
     'Healthy',
     'Lifestyle',
     'Gain Muscle',
   ];
 
-  final List<IconData> _categoryIcons = [
-    Icons.assignment_outlined,
-    Icons.eco_outlined,
-    Icons.self_improvement_outlined,
-    Icons.fitness_center_outlined,
+  final List<String> _categoryIcons = [
+    'assets/1.png',
+    'assets/2.png',
+    'assets/3.png',
+    'assets/4.png',
   ];
+
+  // Sample data - will be replaced with backend data
+  List<Map<String, dynamic>> get _mealPlans => [
+    {
+      'title': _getText('zenMealPlan'),
+      'subtitle': _getText('zenSubtitle'),
+      'imageUrl': null, // Will come from backend
+      'protein': '21g',
+      'carbs': '60g',
+      'kcal': '1000 - 1200',
+      'mealComponents': [
+        '1 ${_getText('breakfast')}',
+        '2 ${_getText('mainCourse')}',
+        '1 ${_getText('soupSnack')}',
+        '1 ${_getText('saladDrink')}',
+      ],
+      'price': 'KD 20.000',
+    },
+    {
+      'title': _getText('zenMealPlan'),
+      'subtitle': _getText('zenSubtitle'),
+      'imageUrl': null,
+      'protein': '21g',
+      'carbs': '60g',
+      'kcal': '1000 - 1200',
+      'mealComponents': [
+        '1 ${_getText('breakfast')}',
+        '2 ${_getText('mainCourse')}',
+        '1 ${_getText('soupSnack')}',
+        '1 ${_getText('saladDrink')}',
+      ],
+      'price': 'KD 20.000',
+    },
+    {
+      'title': _getText('zenMealPlan'),
+      'subtitle': _getText('zenSubtitle'),
+      'imageUrl': null,
+      'protein': '21g',
+      'carbs': '60g',
+      'kcal': '1000 - 1200',
+      'mealComponents': [
+        '1 ${_getText('breakfast')}',
+        '2 ${_getText('mainCourse')}',
+        '1 ${_getText('soupSnack')}',
+        '1 ${_getText('saladDrink')}',
+      ],
+      'price': 'KD 20.000',
+    },
+  ];
+
+  Future<bool> _loadSvgAsset(BuildContext context, String assetPath) async {
+    try {
+      await DefaultAssetBundle.of(context).loadString(assetPath);
+      developer.log('Successfully loaded SVG: $assetPath', name: 'SVGLoader');
+      return true;
+    } catch (e) {
+      developer.log('Failed to load SVG $assetPath: $e', name: 'SVGLoader');
+      return false;
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _languageService.addListener(_onLanguageChanged);
+  }
+
+  @override
+  void dispose() {
+    _languageService.removeListener(_onLanguageChanged);
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _onLanguageChanged() {
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,234 +173,203 @@ class _HomePageState extends State<HomePage> {
       backgroundColor: const Color(0xFF1A1A1A),
       body: Column(
         children: [
-          // Top Header (Orange Background)
+          // Top Header with Home.png background
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.only(top: 40.0, bottom: 20.0),
-            decoration: const BoxDecoration(
-              color: Color(0xFFFF6B35),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: Row(
-                children: [
-                  // Slogan on the left
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Effortless',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          'Healthy Eating!',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
+            child: Image.asset(
+              'assets/Home.png',
+              fit: BoxFit.fill,
+              errorBuilder: (BuildContext context, Object error, StackTrace? stackTrace) {
+                return Container(
+                  color: const Color(0xFFFF6B35),
+                  child: const Center(
+                    child: Icon(Icons.error, color: Colors.red),
                   ),
-                  // Food collage placeholder on the right
-                  Container(
-                    width: 120,
-                    height: 80,
-                    child: Stack(
-                      children: [
-                        // Placeholder for food images - user will add images later
-                        Positioned(
-                          right: 40,
-                          top: 10,
-                          child: Container(
-                            width: 35,
-                            height: 35,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          right: 20,
-                          top: 25,
-                          child: Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          right: 10,
-                          top: 45,
-                          child: Container(
-                            width: 35,
-                            height: 35,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          right: 50,
-                          top: 50,
-                          child: Container(
-                            width: 55,
-                            height: 55,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.3),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          // "Need help choosing" Card
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
-            child: Container(
-              padding: const EdgeInsets.all(16.0),
-              decoration: BoxDecoration(
-                color: const Color(0xFF2A2A2A),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  // Left side - Text content
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text(
-                          'Need help choosing\nthe right meal?',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        const Text(
-                          'Set goals & design your meal plan!',
-                          style: TextStyle(
-                            color: Color(0xFF9E9E9E),
-                            fontSize: 12,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        GestureDetector(
-                          onTap: () {
-                            // Handle navigation
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFF6B35),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Text(
-                              'Let\'s Go',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  // Right side - Professional image placeholder
-                  Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF3A3A3A),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(
-                      Icons.medical_services,
-                      color: Color(0xFF9E9E9E),
-                      size: 40,
-                    ),
-                  ),
-                ],
-              ),
+                );
+              },
             ),
           ),
           // Main Content Area
           Expanded(
             child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+              child: Column(
+                crossAxisAlignment: _isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                children: [
+                  // "Need help choosing" Card - Promotional Banner
+                  SizedBox(
+                    width: double.infinity,
+                    child: Builder(
+                      builder: (context) {
+                        // Use the image's aspect ratio to determine height
+                        // Adjusted to avoid overflow - making it taller
+                        final screenWidth = MediaQuery.of(context).size.width;
+                        final cardHeight = screenWidth / 2.0;
+                        
+                        return Container(
+                          width: double.infinity,
+                          height: cardHeight,
+                          padding: const EdgeInsets.only(left: 36.0, right: 36.0, top: 36.0, bottom: 12.0),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Stack(
+                            children: [
+                              // Doctor PNG background
+                              Positioned.fill(
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Image.asset(
+                                    'assets/doctor.png',
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (BuildContext context, Object error, StackTrace? stackTrace) {
+                                      return Container(
+                                        color: const Color(0xFF2A2A2A),
+                                        child: const Center(
+                                          child: Icon(Icons.error, color: Colors.red),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ),
+                              // Content overlay
+                              Row(
+                                textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
+                                children: [
+                                  // Text content
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: _isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          _getText('helpTitle'),
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            height: 1.2,
+                                          ),
+                                          textAlign: _isRTL ? TextAlign.right : TextAlign.left,
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          _getText('helpSubtitle'),
+                                          style: const TextStyle(
+                                            color: Color(0xFF9E9E9E),
+                                            fontSize: 13,
+                                            height: 1.3,
+                                          ),
+                                          textAlign: _isRTL ? TextAlign.right : TextAlign.left,
+                                        ),
+                                        const SizedBox(height: 16),
+                                        GestureDetector(
+                                          onTap: () {
+                                            Navigator.of(context).push(
+                                              MaterialPageRoute(
+                                                builder: (context) => const GoalSelectionPage(),
+                                              ),
+                                            );
+                                          },
+                                          child: Container(
+                                            width: 87.0,
+                                            height: 28.58,
+                                            padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+                                            decoration: BoxDecoration(
+                                              gradient: const LinearGradient(
+                                                begin: Alignment.centerLeft,
+                                                end: Alignment.centerRight,
+                                                colors: [
+                                                  Color(0xFFFF722D), // #FF722D
+                                                  Color(0xFF99441B), // #99441B
+                                                ],
+                                              ),
+                                              borderRadius: BorderRadius.circular(14.29),
+                                            ),
+                                            child: Center(
+                                              child: Text(
+                                                _getText('letsGo'),
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 20.0, right: 20.0, top: 0, bottom: 4.0),
+                    child: Column(
+                      crossAxisAlignment: _isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                      children: [
                     // Category Navigation
                     SizedBox(
-                      height: 40,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: _categories.length,
-                        itemBuilder: (context, index) {
-                          return GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _selectedCategoryIndex = index;
-                              });
-                            },
-                            child: Container(
-                              margin: const EdgeInsets.only(right: 20),
+                      height: 100,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
+                        children: List.generate(_categories.length, (index) {
+                          final isSelected = _selectedCategoryIndex == index;
+                          return Expanded(
+                            child: GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _selectedCategoryIndex = index;
+                                });
+                              },
                               child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        _categoryIcons[index],
-                                        color: _selectedCategoryIndex == index
-                                            ? const Color(0xFFFF6B35)
-                                            : const Color(0xFF9E9E9E),
-                                        size: 18,
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        _categories[index],
-                                        style: TextStyle(
-                                          color: _selectedCategoryIndex == index
-                                              ? const Color(0xFFFF6B35)
-                                              : const Color(0xFF9E9E9E),
-                                          fontSize: 14,
-                                          fontWeight: _selectedCategoryIndex == index
-                                              ? FontWeight.w600
-                                              : FontWeight.normal,
-                                        ),
-                                      ),
-                                    ],
+                                  // Category Icon above text
+                                  Image.asset(
+                                    _categoryIcons[index],
+                                    width: 40,
+                                    height: 40,
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (BuildContext context, Object error, StackTrace? stackTrace) {
+                                      return const Icon(
+                                        Icons.error,
+                                        color: Colors.red,
+                                        size: 30,
+                                      );
+                                    },
                                   ),
-                                  const SizedBox(height: 6),
+                                  const SizedBox(height: 8),
+                                  // Category Text
+                                  Text(
+                                    _categories[index],
+                                    style: TextStyle(
+                                      color: isSelected
+                                          ? Colors.white
+                                          : const Color(0xFF9E9E9E),
+                                      fontSize: 12,
+                                      fontWeight: isSelected
+                                          ? FontWeight.w600
+                                          : FontWeight.normal,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  // const SizedBox(height: 4),
+                                  // Orange underline for selected
                                   Container(
-                                    width: 25,
+                                    width: 30,
                                     height: 2,
                                     decoration: BoxDecoration(
-                                      color: _selectedCategoryIndex == index
+                                      color: isSelected
                                           ? const Color(0xFFFF6B35)
                                           : Colors.transparent,
                                       borderRadius: BorderRadius.circular(1),
@@ -274,348 +379,96 @@ class _HomePageState extends State<HomePage> {
                               ),
                             ),
                           );
-                        },
+                        }),
                       ),
                     ),
-                    const SizedBox(height: 20),
-                     // Meal Plan Cards
+                    const SizedBox(height: 8),
+                     // Meal Plan Cards - Carousel with scaling effect
                      SizedBox(
-                       height: 380,
-                       child: ListView.builder(
-                         scrollDirection: Axis.horizontal,
-                         itemCount: 3,
+                       height: 343,
+                       child: PageView.builder(
+                         controller: _pageController,
+                         itemCount: _mealPlans.length,
+                         onPageChanged: (index) {
+                           setState(() {
+                             _currentCardIndex = index;
+                           });
+                         },
                          itemBuilder: (context, index) {
-                           // All cards same size
-                           final cardWidth = 280;
-                           final cardHeight = 350;
-                           final imageHeight = 120;
-                           final borderRadius = 12.0;
-                           
-                           return GestureDetector(
-                             onTap: () {
-                               setState(() {
-                                 _currentCardIndex = index;
-                               });
-                             },
-                             child: Container(
-                               width: cardWidth.toDouble(),
-                               margin: const EdgeInsets.only(right: 8),
-                               decoration: BoxDecoration(
-                                 color: const Color(0xFF2A2A2A),
-                                 borderRadius: BorderRadius.circular(borderRadius),
-                               ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Card Image (Empty placeholder)
-                                Container(
-                                  width: double.infinity,
-                                  height: imageHeight.toDouble(),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF3A3A3A),
-                                    borderRadius: BorderRadius.only(
-                                      topLeft: Radius.circular(borderRadius),
-                                      topRight: Radius.circular(borderRadius),
-                                    ),
-                                  ),
-                                  child: Stack(
-                                    children: [
-                                      // Empty image placeholder
-                                      Container(
-                                        width: double.infinity,
-                                        height: double.infinity,
-                                        color: const Color(0xFF4A4A4A),
-                                      ),
-                                      // Title overlay
-                                      Positioned(
-                                        bottom: 10,
-                                        left: 14,
-                                        right: 14,
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            const Text(
-                                              'Zen Meal Plan',
-                                              style: TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                            const Text(
-                                              'For steady, visible progress.',
-                                              style: TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 11,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.all(14),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      const SizedBox(height: 6),
-                                      // Nutritional Information with vertical dividers
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.start,
-                                        children: [
-                                          _buildNutritionItem('Protein', '21g'),
-                                          Container(
-                                            width: 1,
-                                            height: 20,
-                                            color: const Color(0xFF9E9E9E),
-                                            margin: const EdgeInsets.symmetric(horizontal: 8),
-                                          ),
-                                          _buildNutritionItem('Carbs', '60g'),
-                                          Container(
-                                            width: 1,
-                                            height: 20,
-                                            color: const Color(0xFF9E9E9E),
-                                            margin: const EdgeInsets.symmetric(horizontal: 8),
-                                          ),
-                                          _buildNutritionItem('Fat', '15g'),
-                                          const SizedBox(width: 8),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 6, 
-                                              vertical: 2
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: const Color(0xFF3A3A3A),
-                                              borderRadius: BorderRadius.circular(4),
-                                            ),
-                                            child: const Text(
-                                              'Kcal 1000',
-                                              style: TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 10,
-                                                fontWeight: FontWeight.w500,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 10),
-                                      // Includes Section
-                                      const Text(
-                                        'INCLUDES',
-                                        style: TextStyle(
-                                          color: Color(0xFF9E9E9E),
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 3),
-                                      GestureDetector(
-                                        onTap: () {
-                                          Navigator.of(context).push(
-                                            MaterialPageRoute(
-                                              builder: (context) => const MenuPage(),
-                                            ),
-                                          );
-                                        },
-                                        child: const Text(
-                                          'VIEW MENU >',
-                                          style: TextStyle(
-                                            color: Color(0xFFFF6B35),
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      // Meal Components
-                                      _buildMealComponent('1 Breakfast'),
-                                      _buildMealComponent('2 Main Course'),
-                                      _buildMealComponent('1 Soup & Snack'),
-                                      _buildMealComponent('1 Salad & Drink'),
-                                      const SizedBox(height: 16),
-                                      // Pricing and Subscribe Button
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          const Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                'STARTING FROM',
-                                                style: TextStyle(
-                                                  color: Color(0xFF9E9E9E),
-                                                  fontSize: 8,
-                                                ),
-                                              ),
-                                              Text(
-                                                'KD 20.000',
-                                                style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          GestureDetector(
-                                            onTap: () {
-                                              Navigator.of(context).push(
-                                                MaterialPageRoute(
-                                                  builder: (context) => const SubscriptionPage(),
-                                                ),
-                                              );
-                                            },
-                                            child: Container(
-                                              padding: const EdgeInsets.symmetric(
-                                                horizontal: 14, 
-                                                vertical: 6
-                                              ),
-                                              decoration: BoxDecoration(
-                                                color: const Color(0xFFFF6B35),
-                                                borderRadius: BorderRadius.circular(8),
-                                              ),
-                                              child: const Text(
-                                                'SUBSCRIBE',
-                                                style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 10,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ));
-                        },
-                      ),
-                    ),
+                           return _buildCard(index);
+                         },
+                       ),
+                     ),
                   ],
                 ),
               ),
-            ),
+            ])),
           ),
-           // Bottom Navigation Bar
-           Container(
-             height: 70,
-             decoration: const BoxDecoration(
-               color: Color(0xFF1A1A1A),
-               border: Border(
-                 top: BorderSide(color: Color(0xFF3A3A3A), width: 0.5),
-               ),
-             ),
-             child: Row(
-               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-               children: [
-                 _buildBottomNavItem(Icons.assignment_outlined, 'PLANS', 0),
-                 _buildBottomNavItem(Icons.calendar_today_outlined, 'CALENDAR', 1),
-                 _buildBottomNavItem(Icons.person_outline, 'ACCOUNT', 2),
-               ],
-             ),
-           ),
         ],
+      ),
+      bottomNavigationBar: CustomBottomNavigationBar(
+        initialIndex: _selectedBottomNavIndex,
+        onItemTapped: (index) {
+          setState(() {
+            _selectedBottomNavIndex = index;
+          });
+          
+          // Handle navigation
+          if (index == 1) {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => const CalendarPage(),
+              ),
+            );
+          } else if (index == 2) {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => const AccountPage(),
+              ),
+            );
+          }
+        },
       ),
     );
   }
 
-  Widget _buildNutritionItem(String label, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          value,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
-    );
-  }
+  Widget _buildCard(int index) {
+    if (index >= _mealPlans.length) {
+      return const SizedBox.shrink();
+    }
 
-  Widget _buildMealComponent(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 3),
-      child: Row(
-        children: [
-          const Icon(
-            Icons.check,
-            color: Colors.green,
-            size: 14,
-          ),
-          const SizedBox(width: 6),
-          Text(
-            text,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 10,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBottomNavItem(IconData icon, String label, int index) {
-    final isSelected = _selectedBottomNavIndex == index;
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedBottomNavIndex = index;
-        });
+    final mealPlan = _mealPlans[index];
+    
+    return AnimatedBuilder(
+      animation: _pageController,
+      builder: (context, child) {
+        double scale = 0.85; // Default scale for side cards
         
-        // Navigate to appropriate page
-        if (label == 'CALENDAR') {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => const CalendarPage(),
-            ),
-          );
-        } else if (label == 'ACCOUNT') {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => const AccountPage(),
-            ),
-          );
+        if (_pageController.hasClients) {
+          final currentPage = _pageController.page ?? index.toDouble();
+          final offset = (index - currentPage).abs();
+          // Center card (offset = 0) gets scale 1.0, side cards get scale 0.85
+          scale = 1.0 - (offset * 0.15).clamp(0.0, 0.15);
         }
-      },
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            icon,
-            color: isSelected ? const Color(0xFFFF6B35) : const Color(0xFF9E9E9E),
-            size: 20,
-          ),
-          const SizedBox(height: 3),
-          Text(
-            label,
-            style: TextStyle(
-              color: isSelected ? const Color(0xFFFF6B35) : const Color(0xFF9E9E9E),
-              fontSize: 10,
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+        
+        return Center(
+          child: Transform.scale(
+            scale: scale,
+            child: MealPlanCard(
+              title: mealPlan['title'] as String,
+              subtitle: mealPlan['subtitle'] as String,
+              imageUrl: mealPlan['imageUrl'] as String?,
+              protein: mealPlan['protein'] as String,
+              carbs: mealPlan['carbs'] as String,
+              kcal: mealPlan['kcal'] as String,
+              mealComponents: List<String>.from(mealPlan['mealComponents'] as List),
+              price: mealPlan['price'] as String,
             ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
+
+
 }

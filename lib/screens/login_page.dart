@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'signup_page.dart';
-import '../core/auth_api.dart';
 import 'home_page.dart';
+import 'forgot_password_page.dart';
+import '../services/language_service.dart';
+import '../services/auth_service.dart';
+import '../services/auth_storage_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -17,7 +20,75 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _isLoading = false;
-  final AuthApi _authApi = AuthApi();
+  final LanguageService _languageService = LanguageService();
+
+  // Translations
+  Map<String, Map<String, String>> _translations = {
+    'English': {
+      'headerTitle': 'Eat Well, Live Better!',
+      'headerSubtitle': 'Discover balanced meals tailored to your lifestyle. Log in to start your journey toward healthier choices.',
+      'title': "Let's Get Started!",
+      'subtitle': 'Quick login with your phone number.',
+      'phoneHint': 'Phone Number',
+      'emailHint': 'Email Address',
+      'passwordHint': 'Password',
+      'forgotPassword': 'Forgot Password?',
+      'continue': 'CONTINUE',
+      'noAccount': "Don't have an account? ",
+      'signUp': 'Sign Up',
+      'terms': 'By continuing you agree to our\n',
+      'termsLink': 'Terms of Service',
+      'privacyLink': 'Privacy Policy',
+      'fillAllFields': 'Please fill in all fields',
+      'loginError': 'Failed to login. Please try again.',
+      'loginNetworkError': 'Network error. Please check your connection.',
+      'enterPhone': 'Please enter your phone number',
+      'enterPassword': 'Please enter your password',
+    },
+    'Arabic': {
+      'headerTitle': 'كل جيدًا، عِش أفضل!',
+      'headerSubtitle': 'اكتشف وجبات متوازنة مصممة لمساعدتك على بدء رحلتك نحو خيارات صحية أفضل.',
+      'title': 'لنبدأ!',
+      'subtitle': 'تسجيل سريع باستخدام رقم هاتفك.',
+      'phoneHint': 'رقم الهاتف',
+      'emailHint': 'البريد الإلكتروني',
+      'passwordHint': 'كلمة المرور',
+      'forgotPassword': 'هل نسيت كلمة المرور؟',
+      'continue': 'متابعة',
+      'noAccount': 'ليس لديك حساب؟ ',
+      'signUp': 'سجل الآن',
+      'terms': 'بمتابعتك، فإنك توافق على\n',
+      'termsLink': 'شروط الخدمة',
+      'privacyLink': 'سياسة الخصوصية',
+      'fillAllFields': 'يرجى ملء جميع الحقول',
+      'loginError': 'فشل تسجيل الدخول. يرجى المحاولة مرة أخرى.',
+      'loginNetworkError': 'خطأ في الشبكة. يرجى التحقق من اتصالك.',
+      'enterPhone': 'يرجى إدخال رقم هاتفك',
+      'enterPassword': 'يرجى إدخال كلمة المرور',
+    },
+  };
+
+  String _getText(String key) {
+    return _translations[_languageService.currentLanguage]?[key] ?? _translations['English']![key]!;
+  }
+
+  bool get _isRTL => _languageService.isRTL;
+
+  @override
+  void initState() {
+    super.initState();
+    _languageService.addListener(_onLanguageChanged);
+  }
+
+  @override
+  void dispose() {
+    _languageService.removeListener(_onLanguageChanged);
+    super.dispose();
+  }
+
+  void _onLanguageChanged() {
+    setState(() {});
+  }
   
   // Country code options
   final List<Map<String, String>> _countries = [
@@ -31,13 +102,21 @@ class _LoginPageState extends State<LoginPage> {
   Map<String, String> _selectedCountry = {'code': '+965', 'flag': '🇰🇼', 'name': 'Kuwait'};
 
   Future<void> _handleLogin() async {
-    // Validate inputs
-    if (_phoneController.text.isEmpty || 
-        _emailController.text.isEmpty || 
-        _passwordController.text.isEmpty) {
+    // Validate inputs - API only requires phone and password
+    if (_phoneController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please fill in all fields'),
+        SnackBar(
+          content: Text(_getText('enterPhone')),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (_passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_getText('enterPassword')),
           backgroundColor: Colors.red,
         ),
       );
@@ -52,32 +131,39 @@ class _LoginPageState extends State<LoginPage> {
       // Format phone number with country code
       final fullPhoneNumber = '${_selectedCountry['code']}${_phoneController.text}';
       
-      // Call login API
-      final result = await _authApi.login(
-        phone: fullPhoneNumber,
-        email: _emailController.text,
-        password: _passwordController.text,
-      );
-
+      // Call API to login
+      final response = await AuthService.login(fullPhoneNumber, _passwordController.text);
+      
       setState(() {
         _isLoading = false;
       });
 
-      if (result['success'] == true && result['token'] != null) {
-        // TODO: Store token using SharedPreferences if needed
-        // Example: await SharedPreferences.getInstance().then((prefs) => prefs.setString('token', result['token']));
+      // Check if API call was successful
+      if (response['success'] == true && response['data'] != null) {
+        final data = response['data'] as Map<String, dynamic>;
+        final token = data['token'] as String?;
+        final user = data['user'] as Map<String, dynamic>?;
         
-        // Navigate to home page on success
+        // Save token and user ID
+        if (token != null) {
+          await AuthStorageService.saveToken(token);
+        }
+        if (user != null && user['id'] != null) {
+          await AuthStorageService.saveUserId(user['id'] as String);
+        }
+        
+        // Login successful, navigate to home page
         if (mounted) {
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(builder: (context) => const HomePage()),
           );
         }
       } else {
+        // Handle API error response
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(result['message'] ?? 'Login failed. Please try again.'),
+              content: Text(response['message'] ?? _getText('loginError')),
               backgroundColor: Colors.red,
             ),
           );
@@ -88,10 +174,15 @@ class _LoginPageState extends State<LoginPage> {
         _isLoading = false;
       });
       
+      // Handle network or other errors
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e.toString()}'),
+            content: Text(
+              e.toString().contains('Network') 
+                ? _getText('loginNetworkError')
+                : _getText('loginError'),
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -110,95 +201,87 @@ class _LoginPageState extends State<LoginPage> {
             flex: 2,
             child: Stack(
               children: [
-                // Background Image
+                // Banner Image
                 Positioned.fill(
-                  child: SvgPicture.asset(
-                    'assets/card back.svg',
+                  child: Image.asset(
+                    'assets/Group 104.png',
                     fit: BoxFit.fill,
+                    errorBuilder: (BuildContext context, Object error, StackTrace? stackTrace) {
+                      return Container(
+                        color: const Color(0xFF1B1B1B),
+                        child: const Center(
+                          child: Icon(Icons.error, color: Colors.red),
+                        ),
+                      );
+                    },
                   ),
                 ),
-                // Card Front
-                Positioned.fill(
-                  child: SvgPicture.asset(
-                    'assets/card front.svg',
-                    fit: BoxFit.fill,
-                  ),
-                ),
-                // Overlay Content
+                // Overlay Content (transparent to show SVG)
                 Container(
                   width: double.infinity,
                   height: double.infinity,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.black.withValues(alpha: 0.3),
-                        Colors.black.withValues(alpha: 0.6),
-                      ],
-                    ),
-                  ),
                   child: SafeArea(
                     child: Padding(
                       padding: const EdgeInsets.all(24.0),
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        crossAxisAlignment: _isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                         children: [
                           // Logo
-                          Positioned(
-                            left: 18.84,
-                            top: 83.26,
-                            child: SvgPicture.asset(
-                              'assets/newlogo.svg',
-                              width: 69.09375,
-                              height: 68.86554718017578,
+                          Align(
+                            alignment: _isRTL ? Alignment.topRight : Alignment.topLeft,
+                            child: Padding(
+                              padding: EdgeInsets.only(
+                                top: 20,
+                                right: _isRTL ? 0 : 0,
+                                left: _isRTL ? 0 : 0,
+                              ),
+                              child: SvgPicture.asset(
+                                'assets/newlogo.svg',
+                                width: 69.09375,
+                                height: 68.86554718017578,
+                              ),
                             ),
                           ),
                           const Spacer(),
                           // Text Overlay
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          Align(
+                            alignment: _isRTL ? Alignment.centerRight : Alignment.centerLeft,
+                            child: Column(
+                              crossAxisAlignment: _isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                               children: [
-                                Positioned(
-                                  left: 16,
-                                  top: 177,
-                                  child: Container(
-                                    width: 280,
-                                    height: 21,
-                                    child: const Text(
-                                      'Eat Well, Live Better!',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 21.98,
-                                        fontWeight: FontWeight.w700,
-                                        height: 0.98, // line-height: 21.44px / font-size: 21.98px
-                                        letterSpacing: -0.54,
-                                        fontFamily: 'Onest',
-                                      ),
+                                SizedBox(
+                                  width: 280,
+                                  child: Text(
+                                    _getText('headerTitle'),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 21.98,
+                                      fontWeight: FontWeight.w700,
+                                      height: 0.98,
+                                      letterSpacing: -0.54,
+                                      fontFamily: 'Onest',
                                     ),
+                                    textAlign: _isRTL ? TextAlign.right : TextAlign.left,
                                   ),
                                 ),
-                              const SizedBox(height: 16),
-                              Positioned(
-                                left: 16,
-                                top: 206,
-                                child: Container(
+                                const SizedBox(height: 16),
+                                SizedBox(
                                   width: 347,
-                                  height: 37,
-                                  child: const Text(
-                                    'Discover balanced meals tailored to your lifestyle. Log in to start your journey toward healthier choices.',
-                                    style: TextStyle(
+                                  child: Text(
+                                    _getText('headerSubtitle'),
+                                    style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 11.31,
                                       fontWeight: FontWeight.w500,
-                                      height: 1.67, // line-height: 18.84px / font-size: 11.31px
+                                      height: 1.67,
                                       letterSpacing: 0.0,
                                       fontFamily: 'Onest',
                                     ),
+                                    textAlign: _isRTL ? TextAlign.right : TextAlign.left,
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                           const SizedBox(height: 24),
                         ],
@@ -233,16 +316,15 @@ class _LoginPageState extends State<LoginPage> {
                   children: [
                     // Title
                     Center(
-                      child: Container(
+                      child: SizedBox(
                         width: 256,
-                        height: 33,
-                        child: const Text(
-                          "Let's Get Started!",
-                          style: TextStyle(
+                        child: Text(
+                          _getText('title'),
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 26,
                             fontWeight: FontWeight.w700,
-                            height: 0.82, // line-height: 21.44px / font-size: 26px
+                            height: 0.82,
                             letterSpacing: 0.0,
                             fontFamily: 'Onest',
                           ),
@@ -253,16 +335,15 @@ class _LoginPageState extends State<LoginPage> {
                     const SizedBox(height: 8),
                     // Subtitle
                     Center(
-                      child: Container(
+                      child: SizedBox(
                         width: 319,
-                        height: 22,
-                        child: const Text(
-                          'Quick login with your phone number.',
-                          style: TextStyle(
+                        child: Text(
+                          _getText('subtitle'),
+                          style: const TextStyle(
                             color: Color(0xFF9E9E9E),
                             fontSize: 15,
                             fontWeight: FontWeight.w400,
-                            height: 1.43, // line-height: 21.44px / font-size: 15px
+                            height: 1.43,
                             letterSpacing: 0.0,
                             fontFamily: 'Onest',
                           ),
@@ -272,8 +353,9 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     const SizedBox(height: 32),
                     Row(
-                      children: [
-                        // Country Code Dropdown
+                      textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
+                      children: _isRTL ? [
+                        // Country Code Dropdown (will appear on right due to RTL)
                         GestureDetector(
                           onTap: () {
                             showModalBottomSheet(
@@ -350,7 +432,109 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        // Phone Number Field
+                        // Phone Number Field (will appear on left due to RTL)
+                        Expanded(
+                          child: Container(
+                            height: 56,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF2A2A2A),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: const Color(0xFF3A3A3A)),
+                            ),
+                            child: TextField(
+                              controller: _phoneController,
+                              textDirection: TextDirection.ltr,
+                              textAlign: TextAlign.right,
+                              style: const TextStyle(color: Colors.white),
+                              keyboardType: TextInputType.phone,
+                              decoration: InputDecoration(
+                                hintText: _getText('phoneHint'),
+                                hintStyle: const TextStyle(color: Color(0xFF9E9E9E)),
+                                border: InputBorder.none,
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ] : [
+                        // Country Code Dropdown (on left for LTR)
+                        GestureDetector(
+                          onTap: () {
+                            showModalBottomSheet(
+                              context: context,
+                              backgroundColor: const Color(0xFF2A2A2A),
+                              shape: const RoundedRectangleBorder(
+                                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                              ),
+                              builder: (context) => Container(
+                                padding: const EdgeInsets.symmetric(vertical: 20),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      width: 40,
+                                      height: 4,
+                                      margin: const EdgeInsets.only(bottom: 20),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF9E9E9E),
+                                        borderRadius: BorderRadius.circular(2),
+                                      ),
+                                    ),
+                                    ..._countries.map((country) => ListTile(
+                                      leading: Text(
+                                        country['flag']!,
+                                        style: const TextStyle(fontSize: 24),
+                                      ),
+                                      title: Text(
+                                        country['name']!,
+                                        style: const TextStyle(color: Colors.white),
+                                      ),
+                                      trailing: Text(
+                                        country['code']!,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      onTap: () {
+                                        setState(() {
+                                          _selectedCountry = country;
+                                        });
+                                        Navigator.pop(context);
+                                      },
+                                    )),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            width: 100,
+                            height: 56,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF2A2A2A),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: const Color(0xFF3A3A3A)),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(_selectedCountry['flag']!, style: const TextStyle(fontSize: 20)),
+                                const SizedBox(width: 8),
+                                Text(
+                                  _selectedCountry['code']!,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        // Phone Number Field (on right for LTR)
                         Expanded(
                           child: Container(
                             height: 56,
@@ -363,11 +547,11 @@ class _LoginPageState extends State<LoginPage> {
                               controller: _phoneController,
                               style: const TextStyle(color: Colors.white),
                               keyboardType: TextInputType.phone,
-                              decoration: const InputDecoration(
-                                hintText: 'Phone Number',
-                                hintStyle: TextStyle(color: Color(0xFF9E9E9E)),
+                              decoration: InputDecoration(
+                                hintText: _getText('phoneHint'),
+                                hintStyle: const TextStyle(color: Color(0xFF9E9E9E)),
                                 border: InputBorder.none,
-                                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                               ),
                             ),
                           ),
@@ -385,13 +569,15 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       child: TextField(
                         controller: _emailController,
+                        textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
+                        textAlign: _isRTL ? TextAlign.right : TextAlign.left,
                         style: const TextStyle(color: Colors.white),
                         keyboardType: TextInputType.emailAddress,
-                        decoration: const InputDecoration(
-                          hintText: 'Email Address',
-                          hintStyle: TextStyle(color: Color(0xFF9E9E9E)),
+                        decoration: InputDecoration(
+                          hintText: _getText('emailHint'),
+                          hintStyle: const TextStyle(color: Color(0xFF9E9E9E)),
                           border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                         ),
                       ),
                     ),
@@ -407,9 +593,11 @@ class _LoginPageState extends State<LoginPage> {
                       child: TextField(
                         controller: _passwordController,
                         obscureText: _obscurePassword,
+                        textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
+                        textAlign: _isRTL ? TextAlign.right : TextAlign.left,
                         style: const TextStyle(color: Colors.white),
                         decoration: InputDecoration(
-                          hintText: 'Password',
+                          hintText: _getText('passwordHint'),
                           hintStyle: const TextStyle(color: Color(0xFF9E9E9E)),
                           border: InputBorder.none,
                           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -429,14 +617,18 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     // Forgot Password Link
                     Align(
-                      alignment: Alignment.centerRight,
+                      alignment: _isRTL ? Alignment.centerLeft : Alignment.centerRight,
                       child: TextButton(
                         onPressed: () {
-                          // Handle forgot password
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const ForgotPasswordPage(),
+                            ),
+                          );
                         },
-                        child: const Text(
-                          'Forgot Password?',
-                          style: TextStyle(
+                        child: Text(
+                          _getText('forgotPassword'),
+                          style: const TextStyle(
                             color: Color(0xFF9E9E9E),
                             fontSize: 14,
                           ),
@@ -476,9 +668,9 @@ class _LoginPageState extends State<LoginPage> {
                                   valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                                 ),
                               )
-                            : const Text(
-                                'CONTINUE',
-                                style: TextStyle(
+                            : Text(
+                                _getText('continue'),
+                                style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
@@ -498,16 +690,16 @@ class _LoginPageState extends State<LoginPage> {
                           );
                         },
                         child: RichText(
-                          text: const TextSpan(
-                            style: TextStyle(
+                          text: TextSpan(
+                            style: const TextStyle(
                               color: Color(0xFF9E9E9E),
                               fontSize: 16,
                             ),
                             children: [
-                              TextSpan(text: "Don't have an account? "),
+                              TextSpan(text: _getText('noAccount')),
                               TextSpan(
-                                text: 'Sign Up',
-                                style: TextStyle(
+                                text: _getText('signUp'),
+                                style: const TextStyle(
                                   color: Color(0xFFFF6B35),
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -522,24 +714,24 @@ class _LoginPageState extends State<LoginPage> {
                     Center(
                       child: RichText(
                         textAlign: TextAlign.center,
-                        text: const TextSpan(
-                          style: TextStyle(
+                        text: TextSpan(
+                          style: const TextStyle(
                             color: Color(0xFF9E9E9E),
                             fontSize: 12,
                           ),
                           children: [
-                            TextSpan(text: 'By continuing you agree to our\n'),
+                            TextSpan(text: _getText('terms')),
                             TextSpan(
-                              text: 'Terms of Service',
-                              style: TextStyle(
+                              text: _getText('termsLink'),
+                              style: const TextStyle(
                                 color: Colors.white,
                                 decoration: TextDecoration.underline,
                               ),
                             ),
                             TextSpan(text: ' | '),
                             TextSpan(
-                              text: 'Privacy Policy',
-                              style: TextStyle(
+                              text: _getText('privacyLink'),
+                              style: const TextStyle(
                                 color: Colors.white,
                                 decoration: TextDecoration.underline,
                               ),

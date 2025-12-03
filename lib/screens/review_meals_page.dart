@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/language_service.dart';
 
 class ReviewMealsPage extends StatefulWidget {
   final DateTime selectedDate;
@@ -13,42 +14,149 @@ class ReviewMealsPage extends StatefulWidget {
 }
 
 class _ReviewMealsPageState extends State<ReviewMealsPage> {
-  String _formatDateForButton(DateTime date) {
-    final months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-    return '${months[date.month - 1]} ${date.day},${date.year}';
+  final LanguageService _languageService = LanguageService();
+
+  // Translations
+  Map<String, Map<String, String>> _translations = {
+    'English': {
+      'reviewMeals': 'Review Your Meals!',
+      'checkSelections': 'Check your selections before finalizing.',
+      'meals': 'Meals',
+      'salads': 'Salads',
+      'snacks': 'Snacks',
+      'add': 'ADD',
+      'quantity': 'Qty:',
+      'protein': 'Protein',
+      'carbs': 'Carbs',
+      'fats': 'Fats',
+      'kcal': 'kcal',
+      'confirm': 'CONFIRM',
+      'forgotMeal': 'Missed selecting a meal?',
+      'autoRepeat': 'We\'ll carry over your previous week\'s choices automatically.',
+    },
+    'Arabic': {
+      'reviewMeals': 'راجع وجباتك!',
+      'checkSelections': 'تأكد من اختياراتك قبل التأكيد النهائي.',
+      'meals': 'وجبات',
+      'salads': 'سلطات',
+      'snacks': 'سناكات',
+      'add': 'أضف',
+      'quantity': 'الكمية:',
+      'protein': 'بروتين',
+      'carbs': 'كربوهيدرات',
+      'fats': 'دهون',
+      'kcal': 'كيلو',
+      'confirm': 'تأكيد',
+      'forgotMeal': 'نسيت تختار وجبة؟',
+      'autoRepeat': 'بنكرر لك اختيارات الأسبوع اللي طاف تلقائيا.',
+    },
+  };
+
+  String _getText(String key) {
+    return _translations[_languageService.currentLanguage]?[key] ?? _translations['English']![key]!;
   }
 
-  final List<Map<String, dynamic>> _selectedMeals = [
-    {
-      'title': 'Grilled Chicken Power Bowl',
-      'calories': '145',
-      'protein': '21g',
-      'carbs': '21g',
-      'fats': '21g',
-      'quantity': 2,
-      'category': 'meals',
-    },
-    {
-      'title': 'Grilled Chicken Power Bowl',
-      'calories': '145',
-      'protein': '21g',
-      'carbs': '21g',
-      'fats': '21g',
-      'quantity': 2,
-      'category': 'meals',
-    },
-  ];
+  bool get _isRTL => _languageService.isRTL;
 
-  final List<Map<String, dynamic>> _selectedSalads = [
-    {
-      'title': 'Grilled Chicken Power Bowl',
-      'calories': '145',
-      'protein': '21g',
-      'carbs': '21g',
-      'fats': '21g',
-      'quantity': 2,
-    },
-  ];
+  String _formatDateForButton(DateTime date) {
+    if (_isRTL) {
+      final monthsAr = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+      return '${monthsAr[date.month - 1]} ${date.day},${date.year}';
+    } else {
+      final months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+      return '${months[date.month - 1]} ${date.day},${date.year}';
+    }
+  }
+
+  List<Map<String, dynamic>> get _selectedMeals {
+    if (_isRTL) {
+      return [
+        {
+          'title': 'طبق دجاج مشوي غني بالطاقة',
+          'calories': '145',
+          'protein': '21g',
+          'carbs': '21g',
+          'fats': '21g',
+          'quantity': 2,
+          'category': 'meals',
+        },
+        {
+          'title': 'طبق دجاج مشوي غني بالطاقة',
+          'calories': '145',
+          'protein': '21g',
+          'carbs': '21g',
+          'fats': '21g',
+          'quantity': 2,
+          'category': 'meals',
+        },
+      ];
+    } else {
+      return [
+        {
+          'title': 'Grilled Chicken Power Bowl',
+          'calories': '145',
+          'protein': '21g',
+          'carbs': '21g',
+          'fats': '21g',
+          'quantity': 2,
+          'category': 'meals',
+        },
+        {
+          'title': 'Grilled Chicken Power Bowl',
+          'calories': '145',
+          'protein': '21g',
+          'carbs': '21g',
+          'fats': '21g',
+          'quantity': 2,
+          'category': 'meals',
+        },
+      ];
+    }
+  }
+
+  List<Map<String, dynamic>> get _selectedSalads => [];
+
+  List<Map<String, dynamic>> get _selectedSnacks {
+    if (_isRTL) {
+      return [
+        {
+          'title': 'طبق دجاج مشوي غني بالطاقة',
+          'calories': '145',
+          'protein': '21g',
+          'carbs': '21g',
+          'fats': '21g',
+          'quantity': 2,
+        },
+      ];
+    } else {
+      return [
+        {
+          'title': 'Grilled Chicken Power Bowl',
+          'calories': '145',
+          'protein': '21g',
+          'carbs': '21g',
+          'fats': '21g',
+          'quantity': 2,
+        },
+      ];
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _languageService.addListener(_onLanguageChanged);
+  }
+
+  @override
+  void dispose() {
+    _languageService.removeListener(_onLanguageChanged);
+    super.dispose();
+  }
+
+  void _onLanguageChanged() {
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,9 +170,13 @@ class _ReviewMealsPageState extends State<ReviewMealsPage> {
               padding: const EdgeInsets.all(20),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    icon: Icon(
+                      _isRTL ? Icons.arrow_forward : Icons.arrow_back,
+                      color: Colors.white,
+                    ),
                     onPressed: () => Navigator.pop(context),
                   ),
                   const Spacer(),
@@ -76,37 +188,12 @@ class _ReviewMealsPageState extends State<ReviewMealsPage> {
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
+                      textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
                       children: [
-                        Container(
-                          width: 20,
-                          height: 20,
-                          decoration: BoxDecoration(
-                            color: Colors.lightBlue,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: const Stack(
-                            children: [
-                              Center(
-                                child: Text(
-                                  '22',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                              Positioned(
-                                top: -2,
-                                right: -2,
-                                child: Icon(
-                                  Icons.check_circle,
-                                  color: Colors.green,
-                                  size: 10,
-                                ),
-                              ),
-                            ],
-                          ),
+                        const Icon(
+                          Icons.calendar_today,
+                          color: Color(0xFFFF6B35),
+                          size: 16,
                         ),
                         const SizedBox(width: 8),
                         Text(
@@ -126,20 +213,21 @@ class _ReviewMealsPageState extends State<ReviewMealsPage> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: _isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
                 children: [
-                  const Text(
-                    'Review Your Meals!',
-                    style: TextStyle(
+                  Text(
+                    _getText('reviewMeals'),
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
-                    'Check your selections before finalizing.',
-                    style: TextStyle(
+                  Text(
+                    _getText('checkSelections'),
+                    style: const TextStyle(
                       color: Color(0xFF9E9E9E),
                       fontSize: 14,
                     ),
@@ -157,11 +245,15 @@ class _ReviewMealsPageState extends State<ReviewMealsPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Meals Section
-                    _buildSection('Meals', 3, 3, _selectedMeals),
+                    _buildSection(_getText('meals'), 3, 3, _selectedMeals),
                     const SizedBox(height: 32),
 
                     // Salads Section
-                    _buildSaladsSection(1, 3, _selectedSalads),
+                    _buildSection(_getText('salads'), 1, 0, _selectedSalads),
+                    const SizedBox(height: 32),
+
+                    // Snacks Section
+                    _buildSection(_getText('snacks'), 2, 1, _selectedSnacks),
                     const SizedBox(height: 32),
 
                     // Information Card
@@ -169,21 +261,21 @@ class _ReviewMealsPageState extends State<ReviewMealsPage> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [
-                            Color(0xFFFF6B35),
-                            Color(0xFFE55A2B),
-                          ],
-                        ),
+                        color: const Color(0xFFFF6B35).withOpacity(0.2),
                         borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: const Color(0xFFFF6B35).withOpacity(0.3),
+                          width: 1,
+                        ),
                       ),
                       child: Row(
+                        textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
                         children: [
                           Container(
                             width: 40,
                             height: 40,
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.2),
+                              color: const Color(0xFFFF6B35),
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(
@@ -193,13 +285,28 @@ class _ReviewMealsPageState extends State<ReviewMealsPage> {
                             ),
                           ),
                           const SizedBox(width: 16),
-                          const Expanded(
-                            child: Text(
-                              'Missed selecting a meal? We\'ll carry over your previous week\'s choices automatically.',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                              ),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: _isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                              textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
+                              children: [
+                                Text(
+                                  _getText('forgotMeal'),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  _getText('autoRepeat'),
+                                  style: const TextStyle(
+                                    color: Color(0xFF9E9E9E),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
@@ -227,46 +334,28 @@ class _ReviewMealsPageState extends State<ReviewMealsPage> {
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
               children: [
-                // Nutritional Summary
-                Row(
-                  children: [
-                    _buildNutritionLabel('Protein', '21g'),
-                    Container(
-                      width: 1,
-                      height: 16,
-                      color: Colors.green,
-                      margin: const EdgeInsets.symmetric(horizontal: 8),
-                    ),
-                    _buildNutritionLabel('Carbs', '21g'),
-                    Container(
-                      width: 1,
-                      height: 16,
-                      color: Colors.green,
-                      margin: const EdgeInsets.symmetric(horizontal: 8),
-                    ),
-                    _buildNutritionLabel('Fats', '21g'),
-                  ],
-                ),
-                // Total Calories
+                // Total Calories (left in LTR, right in RTL)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
                     color: const Color(0xFF1A1A1A),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
+                    textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.local_fire_department,
                         color: Color(0xFFFF6B35),
                         size: 20,
                       ),
-                      SizedBox(width: 4),
+                      const SizedBox(width: 4),
                       Text(
-                        'Kcal 1000',
-                        style: TextStyle(
+                        '1000 ${_getText('kcal')}',
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
@@ -274,6 +363,27 @@ class _ReviewMealsPageState extends State<ReviewMealsPage> {
                       ),
                     ],
                   ),
+                ),
+                // Nutritional Summary (right in LTR, left in RTL)
+                Row(
+                  textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
+                  children: [
+                    _buildNutritionLabel(_getText('protein'), '21g'),
+                    Container(
+                      width: 1,
+                      height: 16,
+                      color: Colors.green,
+                      margin: const EdgeInsets.symmetric(horizontal: 8),
+                    ),
+                    _buildNutritionLabel(_getText('carbs'), '21g'),
+                    Container(
+                      width: 1,
+                      height: 16,
+                      color: Colors.green,
+                      margin: const EdgeInsets.symmetric(horizontal: 8),
+                    ),
+                    _buildNutritionLabel(_getText('fats'), '21g'),
+                  ],
                 ),
               ],
             ),
@@ -304,9 +414,9 @@ class _ReviewMealsPageState extends State<ReviewMealsPage> {
                     borderRadius: BorderRadius.circular(28),
                   ),
                 ),
-                child: const Text(
-                  'CONFIRM',
-                  style: TextStyle(
+                child: Text(
+                  _getText('confirm'),
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -346,12 +456,15 @@ class _ReviewMealsPageState extends State<ReviewMealsPage> {
 
   Widget _buildSection(String title, int current, int total, List<Map<String, dynamic>> items) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: _isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
           children: [
             RichText(
+              textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
               text: TextSpan(
                 style: const TextStyle(
                   color: Colors.white,
@@ -369,64 +482,15 @@ class _ReviewMealsPageState extends State<ReviewMealsPage> {
                 ],
               ),
             ),
-            if (items.isEmpty)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2A2A2A),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Text(
-                  'ADD',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        ...items.map((meal) => _buildMealEntry(meal)),
-      ],
-    );
-  }
-
-  Widget _buildSaladsSection(int current, int total, List<Map<String, dynamic>> items) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            RichText(
-              text: TextSpan(
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-                children: [
-                  const TextSpan(text: 'Salads - '),
-                  TextSpan(
-                    text: '$current/$total',
-                    style: const TextStyle(
-                      color: Color(0xFFFF6B35),
-                    ),
-                  ),
-                ],
-              ),
-            ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               decoration: BoxDecoration(
                 color: const Color(0xFF2A2A2A),
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Text(
-                'ADD',
-                style: TextStyle(
+              child: Text(
+                _getText('add'),
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
@@ -451,8 +515,9 @@ class _ReviewMealsPageState extends State<ReviewMealsPage> {
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
+        textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
         children: [
-          // Image
+          // Image (left in LTR, right in RTL)
           Container(
             width: 60,
             height: 60,
@@ -470,7 +535,8 @@ class _ReviewMealsPageState extends State<ReviewMealsPage> {
           // Details
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: _isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
               children: [
                 Text(
                   meal['title'],
@@ -482,6 +548,8 @@ class _ReviewMealsPageState extends State<ReviewMealsPage> {
                 ),
                 const SizedBox(height: 4),
                 Row(
+                  mainAxisAlignment: _isRTL ? MainAxisAlignment.end : MainAxisAlignment.start,
+                  textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
                   children: [
                     const Icon(
                       Icons.local_fire_department,
@@ -490,7 +558,7 @@ class _ReviewMealsPageState extends State<ReviewMealsPage> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      '${meal['calories']} kcal',
+                      '${meal['calories']} ${_getText('kcal')}',
                       style: const TextStyle(
                         color: Color(0xFFFF6B35),
                         fontSize: 12,
@@ -501,30 +569,33 @@ class _ReviewMealsPageState extends State<ReviewMealsPage> {
                 ),
                 const SizedBox(height: 6),
                 Row(
+                  mainAxisAlignment: _isRTL ? MainAxisAlignment.end : MainAxisAlignment.start,
+                  textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
                   children: [
-                    _buildNutritionValue('Protein', meal['protein']),
+                    _buildNutritionValue(_getText('protein'), meal['protein']),
                     Container(
                       width: 1,
                       height: 12,
                       color: Colors.green,
                       margin: const EdgeInsets.symmetric(horizontal: 4),
                     ),
-                    _buildNutritionValue('Carbs', meal['carbs']),
+                    _buildNutritionValue(_getText('carbs'), meal['carbs']),
                     Container(
                       width: 1,
                       height: 12,
                       color: Colors.green,
                       margin: const EdgeInsets.symmetric(horizontal: 4),
                     ),
-                    _buildNutritionValue('Fats', meal['fats']),
+                    _buildNutritionValue(_getText('fats'), meal['fats']),
                   ],
                 ),
               ],
             ),
           ),
-          // Quantity
+          const SizedBox(width: 16),
+          // Quantity (right in LTR, left in RTL)
           Text(
-            'Qty:${meal['quantity']}',
+            '${_getText('quantity')} ${meal['quantity']}',
             style: const TextStyle(
               color: Colors.white,
               fontSize: 14,

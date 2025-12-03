@@ -32,42 +32,54 @@ class _SplashScreenState extends State<SplashScreen> {
         decoration: const BoxDecoration(
           color: Color(0xFF1B1B1B), // #1B1B1B
         ),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 161.48046875,
-                height: 162.58837890625,
-                decoration: BoxDecoration(
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFFF5504).withOpacity(0.0),
-                      blurRadius: 25.13,
-                      spreadRadius: 0.63,
-                      offset: const Offset(0, 0),
-                    ),
-                  ],
-                ),
-                child: SvgPicture.asset(
-                  'assets/newlogo.svg',
+        child: Stack(
+          children: [
+            // Logo positioned at specific coordinates
+            Positioned(
+              top: 332,
+              left: 119.53,
+              child: Opacity(
+                opacity: 1,
+                child: Container(
                   width: 161.48046875,
                   height: 162.58837890625,
+                  decoration: BoxDecoration(
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFFF5504).withOpacity(0.0),
+                        blurRadius: 25.13,
+                        spreadRadius: 0.63,
+                        offset: const Offset(0, 0),
+                      ),
+                    ],
+                  ),
+                  child: SvgPicture.asset(
+                    'assets/newlogo.svg',
+                    width: 161.48046875,
+                    height: 162.58837890625,
+                  ),
                 ),
               ),
-              const SizedBox(height: 0),
-              const Text(
-                'soaraat',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 52,
-                  fontWeight: FontWeight.bold,
-                  height: 1.0, // Exact line height to match letter height
-                  letterSpacing: 0.0,
+            ),
+            // Text "soaraat" - will need positioning attributes
+            const Positioned(
+              top: 520, // Approximate position below logo, adjust as needed
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Text(
+                  'soaraat',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 52,
+                    fontWeight: FontWeight.bold,
+                    height: 1.0, // Exact line height to match letter height
+                    letterSpacing: 0.0,
+                  ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'order_confirmation_page.dart';
+import '../services/language_service.dart';
 
 class CheckoutPage extends StatefulWidget {
   const CheckoutPage({super.key});
@@ -9,6 +10,7 @@ class CheckoutPage extends StatefulWidget {
 }
 
 class _CheckoutPageState extends State<CheckoutPage> {
+  final LanguageService _languageService = LanguageService();
   String _selectedPackage = '1 Day';
   
   final Map<String, String> _packages = {
@@ -18,6 +20,81 @@ class _CheckoutPageState extends State<CheckoutPage> {
     '60 Days': 'KD 100.00',
   };
 
+  // Translations
+  Map<String, Map<String, String>> _translations = {
+    'English': {
+      'checkout': 'Checkout',
+      'planDetails': 'Plan Details',
+      'selectPackageDuration': 'Select Package Duration',
+      'flexibleDelivery': 'Flexible delivery days included in your plan',
+      'beginAsEarly': 'Begin as early as Monday, 29 Sept',
+      'chooseStartDate': 'You\'ll be able to choose the start date of your meal plan after payment.',
+      'payUsing': 'PAY USING',
+      'pay': 'PAY',
+      'zenMealPlan': 'Zen Meal Plan',
+      'zenSubtitle': 'For steady, visible progress.',
+      'mealDescription': '1 Breakfast, 2 Main course, 1 Salad & Drinks, 1 Soup',
+      'oneDay': '1 Day',
+      'sevenDays': '7 Days',
+      'thirtyDays': '30 Days',
+      'sixtyDays': '60 Days',
+    },
+    'Arabic': {
+      'checkout': 'الدفع',
+      'planDetails': 'تفاصيل الخطة',
+      'selectPackageDuration': 'اختر مدة الحزمة',
+      'flexibleDelivery': 'أيام التوصيل المرنة المضمنة في خطتك',
+      'beginAsEarly': 'ابدأ في أقرب وقت يوم الاثنين، 29 سبتمبر',
+      'chooseStartDate': 'ستتمكن من اختيار تاريخ بدء خطة وجباتك بعد الدفع.',
+      'payUsing': 'الدفع باستخدام',
+      'pay': 'دفع',
+      'zenMealPlan': 'خطة وجبات زن',
+      'zenSubtitle': 'للتقدم المستمر والمرئي.',
+      'mealDescription': '1 إفطار، 2 طبق رئيسي، 1 سلطة ومشروبات، 1 شوربة',
+      'oneDay': 'يوم واحد',
+      'sevenDays': '7 أيام',
+      'thirtyDays': '30 يوم',
+      'sixtyDays': '60 يوم',
+    },
+  };
+
+  String _getText(String key) {
+    return _translations[_languageService.currentLanguage]?[key] ?? _translations['English']![key]!;
+  }
+
+  bool get _isRTL => _languageService.isRTL;
+
+  String _getPackageKey(String package) {
+    if (package == '1 Day') return 'oneDay';
+    if (package == '7 Days') return 'sevenDays';
+    if (package == '30 Days') return 'thirtyDays';
+    if (package == '60 Days') return 'sixtyDays';
+    return package;
+  }
+
+  String _getPackageDisplay(String package) {
+    if (_isRTL) {
+      return _getText(_getPackageKey(package));
+    }
+    return package;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _languageService.addListener(_onLanguageChanged);
+  }
+
+  @override
+  void dispose() {
+    _languageService.removeListener(_onLanguageChanged);
+    super.dispose();
+  }
+
+  void _onLanguageChanged() {
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -26,14 +103,17 @@ class _CheckoutPageState extends State<CheckoutPage> {
         backgroundColor: const Color(0xFF1A1A1A),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(
+            _isRTL ? Icons.arrow_forward : Icons.arrow_back,
+            color: Colors.white,
+          ),
           onPressed: () {
             Navigator.of(context).pop();
           },
         ),
-        title: const Text(
-          'Checkout',
-          style: TextStyle(
+        title: Text(
+          _getText('checkout'),
+          style: const TextStyle(
             color: Colors.white,
             fontSize: 18,
             fontWeight: FontWeight.w600,
@@ -60,18 +140,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
                       ),
                       child: Row(
                         children: [
-                          Container(
-                            width: 50,
-                            height: 50,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFF6B35),
-                              borderRadius: BorderRadius.circular(25),
-                            ),
-                            child: const Icon(
-                              Icons.location_on,
-                              color: Colors.white,
-                              size: 24,
-                            ),
+                          const Icon(
+                            Icons.location_on,
+                            color: Color(0xFFFF6B35),
+                            size: 24,
                           ),
                           const SizedBox(width: 16),
                           Expanded(
@@ -109,7 +181,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     const SizedBox(height: 24),
                     
                     // Plan Details Section
-                    _buildSectionTitle('Plan Details'),
+                    _buildSectionTitle(_getText('planDetails')),
                     const SizedBox(height: 16),
                     
                     Container(
@@ -122,16 +194,28 @@ class _CheckoutPageState extends State<CheckoutPage> {
                       child: Row(
                         children: [
                           Container(
-                            width: 80,
-                            height: 80,
+                            width: 100,
+                            height: 60,
                             decoration: BoxDecoration(
                               color: const Color(0xFF3A3A3A),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: const Icon(
-                              Icons.restaurant,
-                              color: Color(0xFF9E9E9E),
-                              size: 40,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.asset(
+                                'assets/meal_plan_image.png', // Placeholder - you can add actual image
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    color: const Color(0xFF3A3A3A),
+                                    child: const Icon(
+                                      Icons.restaurant,
+                                      color: Color(0xFF9E9E9E),
+                                      size: 30,
+                                    ),
+                                  );
+                                },
+                              ),
                             ),
                           ),
                           const SizedBox(width: 16),
@@ -139,47 +223,26 @@ class _CheckoutPageState extends State<CheckoutPage> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
-                                  'Zen Meal Plan',
-                                  style: TextStyle(
+                                Text(
+                                  _getText('zenMealPlan'),
+                                  style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
-                                const Text(
-                                  'For steady, visible progress.',
-                                  style: TextStyle(
+                                Text(
+                                  _getText('zenSubtitle'),
+                                  style: const TextStyle(
                                     color: Color(0xFF9E9E9E),
                                     fontSize: 12,
                                   ),
                                 ),
                                 const SizedBox(height: 8),
-                                const Text(
-                                  '1 Breakfast',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                                const Text(
-                                  '2 Main course',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                                const Text(
-                                  '1 Salad & Drinks',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                                const Text(
-                                  '1 Soup',
-                                  style: TextStyle(
+                                Text(
+                                  _getText('mealDescription'),
+                                  style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 12,
                                   ),
@@ -194,11 +257,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     const SizedBox(height: 24),
                     
                     // Package Duration Section
-                    _buildSectionTitle('Select Package Duration'),
+                    _buildSectionTitle(_getText('selectPackageDuration')),
                     const SizedBox(height: 8),
-                    const Text(
-                      'Flexible delivery days included in your plan',
-                      style: TextStyle(
+                    Text(
+                      _getText('flexibleDelivery'),
+                      style: const TextStyle(
                         color: Color(0xFF9E9E9E),
                         fontSize: 14,
                       ),
@@ -234,27 +297,16 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                 width: isSelected ? 2 : 1,
                               ),
                             ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  package,
-                                  style: TextStyle(
-                                    color: isSelected ? const Color(0xFFFF6B35) : Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                            child: Center(
+                              child: Text(
+                                '${_getPackageDisplay(package)} $price',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: isSelected ? Colors.white : Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  price,
-                                  style: TextStyle(
-                                    color: isSelected ? const Color(0xFFFF6B35) : const Color(0xFF9E9E9E),
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
                           ),
                         );
@@ -273,36 +325,28 @@ class _CheckoutPageState extends State<CheckoutPage> {
                       ),
                       child: Row(
                         children: [
-                          Container(
-                            width: 50,
-                            height: 50,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFF6B35),
-                              borderRadius: BorderRadius.circular(25),
-                            ),
-                            child: const Icon(
-                              Icons.calendar_today,
-                              color: Colors.white,
-                              size: 24,
-                            ),
+                          const Icon(
+                            Icons.calendar_today,
+                            color: Color(0xFFFF6B35),
+                            size: 24,
                           ),
                           const SizedBox(width: 16),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
-                                  'Begin as early as Monday, 29 Sept',
-                                  style: TextStyle(
+                                Text(
+                                  _getText('beginAsEarly'),
+                                  style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
-                                const Text(
-                                  'You\'ll be able to choose the start date of your meal plan after payment.',
-                                  style: TextStyle(
+                                Text(
+                                  _getText('chooseStartDate'),
+                                  style: const TextStyle(
                                     color: Color(0xFF9E9E9E),
                                     fontSize: 12,
                                   ),
@@ -338,29 +382,33 @@ class _CheckoutPageState extends State<CheckoutPage> {
             // Payment Method Section
             Row(
               children: [
-                const Text(
-                  'PAY USING',
-                  style: TextStyle(
+                Text(
+                  _getText('payUsing'),
+                  style: const TextStyle(
                     color: Color(0xFF9E9E9E),
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 12),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF3A3A3A),
+                    color: Colors.transparent,
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
-                        width: 20,
-                        height: 20,
+                        width: 24,
+                        height: 24,
                         decoration: BoxDecoration(
-                          color: Colors.blue,
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF1E88E5), Color(0xFFFDD835)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: const Center(
@@ -374,7 +422,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
                       const Text(
                         'Knet',
                         style: TextStyle(
@@ -416,11 +464,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
                   ),
                 ),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
-                      'PAY',
-                      style: TextStyle(
+                    Text(
+                      _getText('pay'),
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -429,7 +477,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     Container(
                       width: 1,
                       height: 20,
-                      color: Colors.white.withOpacity(0.3),
+                      margin: const EdgeInsets.symmetric(horizontal: 16),
+                      color: Colors.white.withOpacity(0.5),
                     ),
                     Text(
                       _packages[_selectedPackage] ?? 'KD 7.00',

@@ -3,7 +3,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:ui';
 import 'login_page.dart';
 import 'otp_verification_page.dart';
-import '../core/auth_api.dart';
+import '../services/language_service.dart';
+import '../services/auth_service.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -15,7 +16,64 @@ class SignupPage extends StatefulWidget {
 class _SignupPageState extends State<SignupPage> {
   final TextEditingController _phoneController = TextEditingController(text: '88776644');
   bool _isLoading = false;
-  final AuthApi _authApi = AuthApi();
+  final LanguageService _languageService = LanguageService();
+
+  // Translations
+  Map<String, Map<String, String>> _translations = {
+    'English': {
+      'title': 'Create Your Account',
+      'subtitle': 'Start your healthy journey with your phone number.',
+      'phoneHint': 'Phone Number',
+      'verificationMessage': 'To verify your number, we\'ll send a code to your phone via SMS.',
+      'sendCode': 'SEND CODE',
+      'alreadyHaveAccount': 'Already have an account? ',
+      'logIn': 'Log In',
+      'terms': 'By continuing you agree to our\n',
+      'termsLink': 'Terms of Service',
+      'privacyLink': 'Privacy Policy',
+      'enterPhone': 'Please enter your phone number',
+      'otpError': 'Failed to send OTP. Please try again.',
+      'networkError': 'Network error. Please check your connection.',
+    },
+    'Arabic': {
+      'title': 'إنشاء حسابك',
+      'subtitle': 'ابدأ رحلتك الصحية برقم هاتفك.',
+      'phoneHint': 'رقم الهاتف',
+      'verificationMessage': 'للتحقق من رقمك، سنرسل رمزًا إلى هاتفك عبر الرسائل النصية.',
+      'sendCode': 'إرسال الرمز',
+      'alreadyHaveAccount': 'هل لديك حساب بالفعل؟ ',
+      'logIn': 'تسجيل الدخول',
+      'terms': 'بمتابعتك، فإنك توافق على\n',
+      'termsLink': 'شروط الخدمة',
+      'privacyLink': 'سياسة الخصوصية',
+      'enterPhone': 'يرجى إدخال رقم هاتفك',
+      'otpError': 'فشل إرسال الرمز. يرجى المحاولة مرة أخرى.',
+      'networkError': 'خطأ في الشبكة. يرجى التحقق من اتصالك.',
+    },
+  };
+
+  String _getText(String key) {
+    return _translations[_languageService.currentLanguage]?[key] ?? _translations['English']![key]!;
+  }
+
+  bool get _isRTL => _languageService.isRTL;
+
+  @override
+  void initState() {
+    super.initState();
+    _languageService.addListener(_onLanguageChanged);
+  }
+
+  @override
+  void dispose() {
+    _languageService.removeListener(_onLanguageChanged);
+    _phoneController.dispose();
+    super.dispose();
+  }
+
+  void _onLanguageChanged() {
+    setState(() {});
+  }
   
   // Country code options
   final List<Map<String, String>> _countries = [
@@ -32,8 +90,8 @@ class _SignupPageState extends State<SignupPage> {
     // Validate phone number
     if (_phoneController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter your phone number'),
+        SnackBar(
+          content: Text(_getText('enterPhone')),
           backgroundColor: Colors.red,
         ),
       );
@@ -48,30 +106,34 @@ class _SignupPageState extends State<SignupPage> {
       // Format phone number with country code
       final fullPhoneNumber = '${_selectedCountry['code']}${_phoneController.text}';
       
-      // Call send-OTP API
-      final result = await _authApi.sendOtp(fullPhoneNumber);
-
+      // Call API to send OTP
+      final response = await AuthService.sendOtp(fullPhoneNumber);
+      
       setState(() {
         _isLoading = false;
       });
 
-      if (result['success'] == true && result['userId'] != null) {
+      // Check if API call was successful
+      if (response['success'] == true && response['data'] != null) {
+        final userId = response['data']['userId'] as String?;
+        
         // Navigate to OTP verification screen with userId
         if (mounted) {
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (context) => OtpVerificationPage(
                 phoneNumber: fullPhoneNumber,
-                userId: result['userId'],
+                userId: userId,
               ),
             ),
           );
         }
       } else {
+        // Handle API error response
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(result['message'] ?? 'Failed to send OTP. Please try again.'),
+              content: Text(response['message'] ?? _getText('otpError')),
               backgroundColor: Colors.red,
             ),
           );
@@ -82,10 +144,15 @@ class _SignupPageState extends State<SignupPage> {
         _isLoading = false;
       });
       
+      // Handle network or other errors
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e.toString()}'),
+            content: Text(
+              e.toString().contains('Network') 
+                ? _getText('networkError')
+                : _getText('otpError'),
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -93,11 +160,11 @@ class _SignupPageState extends State<SignupPage> {
     }
   }
 
-  @override
-  void dispose() {
-    _phoneController.dispose();
-    super.dispose();
-  }
+  // @override
+  // void dispose() {
+  //   _phoneController.dispose();
+  //   super.dispose();
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -110,48 +177,40 @@ class _SignupPageState extends State<SignupPage> {
             flex: 2,
             child: Stack(
               children: [
-                // Background Image
+                // Banner Image
                 Positioned.fill(
-                  child: SvgPicture.asset(
-                    'assets/card back.svg',
+                  child: Image.asset(
+                    'assets/Group 260.png',
                     fit: BoxFit.fill,
+                    errorBuilder: (BuildContext context, Object error, StackTrace? stackTrace) {
+                      return Container(
+                        color: const Color(0xFF1B1B1B),
+                        child: const Center(
+                          child: Icon(Icons.error, color: Colors.red),
+                        ),
+                      );
+                    },
                   ),
                 ),
-                // Card Front
-                Positioned.fill(
-                  child: SvgPicture.asset(
-                    'assets/card front.svg',
-                    fit: BoxFit.fill,
-                  ),
-                ),
-                // Overlay Content
+                // Overlay Content (transparent to show image)
                 Container(
                   width: double.infinity,
                   height: double.infinity,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.black.withOpacity(0.3),
-                        Colors.black.withOpacity(0.6),
-                      ],
-                    ),
-                  ),
                   child: SafeArea(
-                    child: Stack(
-                      children: [
-                        // Logo positioned absolutely
-                        Positioned(
-                          top: 83.26,
-                          left: 18.84,
-                          child: SvgPicture.asset(
-                            'assets/newlogo.svg',
-                            width: 69.09375,
-                            height: 68.86554718017578,
-                          ),
+                    child: Align(
+                      alignment: _isRTL ? Alignment.topRight : Alignment.topLeft,
+                      child: Padding(
+                        padding: EdgeInsets.only(
+                          top: 20,
+                          right: _isRTL ? 18.84 : 0,
+                          left: _isRTL ? 0 : 18.84,
                         ),
-                      ],
+                        child: SvgPicture.asset(
+                          'assets/newlogo.svg',
+                          width: 69.09375,
+                          height: 68.86554718017578,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -177,42 +236,42 @@ class _SignupPageState extends State<SignupPage> {
               color: const Color(0xFF1A1A1A),
               child: Stack(
                 children: [
-                  // Title positioned absolutely
+                  // Title
                   Positioned(
                     top: 7,
                     left: 18,
-                    child: Container(
+                    right: 18,
+                    child: SizedBox(
                       width: 363,
-                      height: 33,
-                      child: const Text(
-                        'Create Your Account',
-                        style: TextStyle(
+                      child: Text(
+                        _getText('title'),
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 26,
                           fontWeight: FontWeight.w700,
                           fontFamily: 'Onest',
-                          height: 0.82, // line-height: 21.44px / font-size: 26px
+                          height: 0.82,
                           letterSpacing: 0.0,
                         ),
                         textAlign: TextAlign.center,
                       ),
                     ),
                   ),
-                  // Subtitle positioned absolutely
+                  // Subtitle
                   Positioned(
                     top: 48,
                     left: 17,
-                    child: Container(
+                    right: 17,
+                    child: SizedBox(
                       width: 367,
-                      height: 21,
-                      child: const Text(
-                        'Start your healthy journey with your phone number.',
-                        style: TextStyle(
+                      child: Text(
+                        _getText('subtitle'),
+                        style: const TextStyle(
                           color: Color(0xFF9E9E9E),
                           fontSize: 15,
                           fontWeight: FontWeight.w400,
                           fontFamily: 'Onest',
-                          height: 1.43, // line-height: 21.44px / font-size: 15px
+                          height: 1.43,
                           letterSpacing: 0.0,
                         ),
                         textAlign: TextAlign.center,
@@ -228,8 +287,9 @@ class _SignupPageState extends State<SignupPage> {
                     const SizedBox(height: 60),
                     // Phone Number Input
                     Row(
-                      children: [
-                        // Country Code Dropdown
+                      textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
+                      children: _isRTL ? [
+                        // Country Code Dropdown (will appear on right due to RTL)
                         GestureDetector(
                           onTap: () {
                             showModalBottomSheet(
@@ -306,7 +366,109 @@ class _SignupPageState extends State<SignupPage> {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        // Phone Number Field
+                        // Phone Number Field (will appear on left due to RTL)
+                        Expanded(
+                          child: Container(
+                            height: 56,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF2A2A2A),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: const Color(0xFF3A3A3A)),
+                            ),
+                            child: TextField(
+                              controller: _phoneController,
+                              textDirection: TextDirection.ltr,
+                              textAlign: TextAlign.right,
+                              style: const TextStyle(color: Colors.white),
+                              keyboardType: TextInputType.phone,
+                              decoration: InputDecoration(
+                                hintText: _getText('phoneHint'),
+                                hintStyle: const TextStyle(color: Color(0xFF9E9E9E)),
+                                border: InputBorder.none,
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ] : [
+                        // Country Code Dropdown (on left for LTR)
+                        GestureDetector(
+                          onTap: () {
+                            showModalBottomSheet(
+                              context: context,
+                              backgroundColor: const Color(0xFF2A2A2A),
+                              shape: const RoundedRectangleBorder(
+                                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                              ),
+                              builder: (context) => Container(
+                                padding: const EdgeInsets.symmetric(vertical: 20),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      width: 40,
+                                      height: 4,
+                                      margin: const EdgeInsets.only(bottom: 20),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF9E9E9E),
+                                        borderRadius: BorderRadius.circular(2),
+                                      ),
+                                    ),
+                                    ..._countries.map((country) => ListTile(
+                                      leading: Text(
+                                        country['flag']!,
+                                        style: const TextStyle(fontSize: 24),
+                                      ),
+                                      title: Text(
+                                        country['name']!,
+                                        style: const TextStyle(color: Colors.white),
+                                      ),
+                                      trailing: Text(
+                                        country['code']!,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      onTap: () {
+                                        setState(() {
+                                          _selectedCountry = country;
+                                        });
+                                        Navigator.pop(context);
+                                      },
+                                    )),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            width: 100,
+                            height: 56,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF2A2A2A),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: const Color(0xFF3A3A3A)),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(_selectedCountry['flag']!, style: const TextStyle(fontSize: 20)),
+                                const SizedBox(width: 8),
+                                Text(
+                                  _selectedCountry['code']!,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        // Phone Number Field (on right for LTR)
                         Expanded(
                           child: Container(
                             height: 56,
@@ -319,11 +481,11 @@ class _SignupPageState extends State<SignupPage> {
                               controller: _phoneController,
                               style: const TextStyle(color: Colors.white),
                               keyboardType: TextInputType.phone,
-                              decoration: const InputDecoration(
-                                hintText: 'Phone Number',
-                                hintStyle: TextStyle(color: Color(0xFF9E9E9E)),
+                              decoration: InputDecoration(
+                                hintText: _getText('phoneHint'),
+                                hintStyle: const TextStyle(color: Color(0xFF9E9E9E)),
                                 border: InputBorder.none,
-                                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                               ),
                             ),
                           ),
@@ -332,12 +494,13 @@ class _SignupPageState extends State<SignupPage> {
                     ),
                     const SizedBox(height: 16),
                     // Verification Message
-                    const Text(
-                      'To verify your number, we\'ll send a code to your phone via SMS.',
-                      style: TextStyle(
+                    Text(
+                      _getText('verificationMessage'),
+                      style: const TextStyle(
                         color: Color(0xFF9E9E9E),
                         fontSize: 14,
                       ),
+                      textAlign: _isRTL ? TextAlign.right : TextAlign.left,
                     ),
                     const SizedBox(height: 32),
                     // Send Code Button
@@ -372,9 +535,9 @@ class _SignupPageState extends State<SignupPage> {
                                     valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                                   ),
                                 )
-                              : const Text(
-                                  'SEND CODE',
-                                  style: TextStyle(
+                              : Text(
+                                  _getText('sendCode'),
+                                  style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
@@ -394,16 +557,16 @@ class _SignupPageState extends State<SignupPage> {
                           );
                         },
                         child: RichText(
-                          text: const TextSpan(
-                            style: TextStyle(
+                          text: TextSpan(
+                            style: const TextStyle(
                               color: Color(0xFF9E9E9E),
                               fontSize: 16,
                             ),
                             children: [
-                              TextSpan(text: 'Already have an account? '),
+                              TextSpan(text: _getText('alreadyHaveAccount')),
                               TextSpan(
-                                text: 'Log In',
-                                style: TextStyle(
+                                text: _getText('logIn'),
+                                style: const TextStyle(
                                   color: Color(0xFFFF6B35),
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -418,24 +581,24 @@ class _SignupPageState extends State<SignupPage> {
                     Center(
                       child: RichText(
                         textAlign: TextAlign.center,
-                        text: const TextSpan(
-                          style: TextStyle(
+                        text: TextSpan(
+                          style: const TextStyle(
                             color: Color(0xFF9E9E9E),
                             fontSize: 12,
                           ),
                           children: [
-                            TextSpan(text: 'By continuing you agree to our\n'),
+                            TextSpan(text: _getText('terms')),
                             TextSpan(
-                              text: 'Terms of Service',
-                              style: TextStyle(
+                              text: _getText('termsLink'),
+                              style: const TextStyle(
                                 color: Colors.white,
                                 decoration: TextDecoration.underline,
                               ),
                             ),
                             TextSpan(text: ' | '),
                             TextSpan(
-                              text: 'Privacy Policy',
-                              style: TextStyle(
+                              text: _getText('privacyLink'),
+                              style: const TextStyle(
                                 color: Colors.white,
                                 decoration: TextDecoration.underline,
                               ),

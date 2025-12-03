@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/language_service.dart';
 
 class OrderConfirmationPage extends StatefulWidget {
   const OrderConfirmationPage({super.key});
@@ -8,6 +9,82 @@ class OrderConfirmationPage extends StatefulWidget {
 }
 
 class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
+  final LanguageService _languageService = LanguageService();
+
+  // Translations
+  Map<String, Map<String, String>> _translations = {
+    'English': {
+      'greeting': 'HI ABDUL',
+      'successMessage': 'Subscription Purchased Successfully!',
+      'zenMealPlan': 'Zen Meal Plan',
+      'zenSubtitle': 'For steady, visible progress.',
+      'mealDescription': '1 Breakfast, 2 Main course, 1 Salad & Drinks, 1 Soup',
+      'packageType': 'Package Type',
+      'packageTypeValue': 'Lunch + Dinner',
+      'calories': 'Calories',
+      'caloriesValue': '1200 - 1600 Kcal',
+      'packageDuration': 'Package Duration',
+      'packageDurationValue': '80 days (40 meals)',
+      'nutritionalValues': 'Nutrition Breakdown',
+      'protein': 'Protein',
+      'carbs': 'Carbs',
+      'fat': 'Fat',
+      'paymentSummary': 'Payment Summary',
+      'paymentDate': 'Payment Date',
+      'transactionId': 'Transaction ID',
+      'result': 'Result',
+      'resultValue': 'Captured',
+      'paymentMethod': 'Payment Method',
+      'addMeals': 'ADD MEALS',
+    },
+    'Arabic': {
+      'greeting': 'مرحبا عبد الله',
+      'successMessage': 'تم شراء الاشتراك بنجاح!',
+      'zenMealPlan': 'خطة وجبات زن',
+      'zenSubtitle': 'لتقدم صحي وطبيعي',
+      'mealDescription': '1 إفطار, 2 طبق رئيسي, 1 سلطة ومشروب, 1 شوربة ووجبة خفيفة',
+      'packageType': 'نوع الباقة',
+      'packageTypeValue': 'غداء + عشاء',
+      'calories': 'السعرات الحرارية',
+      'caloriesValue': '1200 - 1600 سعرة حرارية',
+      'packageDuration': 'مدة الباقة',
+      'packageDurationValue': '80 يوم (40 وجبة)',
+      'nutritionalValues': 'القيم الغذائية',
+      'protein': 'بروتين',
+      'carbs': 'كربوهيدرات',
+      'fat': 'دهون',
+      'paymentSummary': 'ملخص الدفع',
+      'paymentDate': 'تاريخ الدفع',
+      'transactionId': 'رقم المعاملة',
+      'result': 'تم التحصيل',
+      'resultValue': 'Captured',
+      'paymentMethod': 'طريقة الدفع',
+      'addMeals': 'أضف الوجبات',
+    },
+  };
+
+  String _getText(String key) {
+    return _translations[_languageService.currentLanguage]?[key] ?? _translations['English']![key]!;
+  }
+
+  bool get _isRTL => _languageService.isRTL;
+
+  @override
+  void initState() {
+    super.initState();
+    _languageService.addListener(_onLanguageChanged);
+  }
+
+  @override
+  void dispose() {
+    _languageService.removeListener(_onLanguageChanged);
+    super.dispose();
+  }
+
+  void _onLanguageChanged() {
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -50,9 +127,9 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                 const SizedBox(height: 16),
                 
                 // Greeting
-                const Text(
-                  'HI ABDUL',
-                  style: TextStyle(
+                Text(
+                  _getText('greeting'),
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
@@ -62,9 +139,9 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                 const SizedBox(height: 8),
                 
                 // Success Message
-                const Text(
-                  'Subscription Purchased Successfully!',
-                  style: TextStyle(
+                Text(
+                  _getText('successMessage'),
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -114,26 +191,26 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text(
-                                      'Zen Meal Plan',
-                                      style: TextStyle(
+                                    Text(
+                                      _getText('zenMealPlan'),
+                                      style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 18,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
                                     const SizedBox(height: 4),
-                                    const Text(
-                                      'For steady, visible progress.',
-                                      style: TextStyle(
+                                    Text(
+                                      _getText('zenSubtitle'),
+                                      style: const TextStyle(
                                         color: Color(0xFF9E9E9E),
                                         fontSize: 14,
                                       ),
                                     ),
                                     const SizedBox(height: 8),
-                                    const Text(
-                                      '1 Breakfast, 2 Main course, 1 Salad & Drinks, 1 Soup',
-                                      style: TextStyle(
+                                    Text(
+                                      _getText('mealDescription'),
+                                      style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 12,
                                       ),
@@ -147,18 +224,18 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                           const SizedBox(height: 20),
                           
                           // Package Specifics
-                          _buildInfoRow('Package Type', 'Lunch + Dinner'),
+                          _buildInfoRow(_getText('packageType'), _getText('packageTypeValue')),
                           const SizedBox(height: 12),
-                          _buildInfoRow('Calories', '1200 - 1600 Kcal'),
+                          _buildInfoRow(_getText('calories'), _getText('caloriesValue')),
                           const SizedBox(height: 12),
-                          _buildInfoRow('Package Duration', '80 days (40 days left)'),
+                          _buildInfoRow(_getText('packageDuration'), _getText('packageDurationValue')),
                           
                           const SizedBox(height: 20),
                           
                           // Nutrition Breakdown
-                          const Text(
-                            'Nutrition Breakdown',
-                            style: TextStyle(
+                          Text(
+                            _getText('nutritionalValues'),
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -170,15 +247,15 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                           Row(
                             children: [
                               Expanded(
-                                child: _buildNutritionBox('Protein', '81-100g', Colors.green),
+                                child: _buildNutritionBox(_getText('protein'), '81-100g', Colors.green),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
-                                child: _buildNutritionBox('Carbs', '162-197g', const Color(0xFFFF6B35)),
+                                child: _buildNutritionBox(_getText('carbs'), '162-197g', const Color(0xFFFF6B35)),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
-                                child: _buildNutritionBox('Fat', '39-75g', Colors.blue),
+                                child: _buildNutritionBox(_getText('fat'), '39-75g', Colors.blue),
                               ),
                             ],
                           ),
@@ -189,9 +266,9 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                     const SizedBox(height: 24),
                     
                     // Payment Summary Section
-                    const Text(
-                      'Payment Summary',
-                      style: TextStyle(
+                    Text(
+                      _getText('paymentSummary'),
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -209,13 +286,15 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                       ),
                       child: Column(
                         children: [
-                          _buildPaymentRow('Payment Date', 'Knet'),
+                          _buildPaymentRow(_getText('paymentDate'), ''),
                           const SizedBox(height: 12),
-                          _buildPaymentRow('Transaction ID', '#12145656565'),
+                          _buildPaymentRow(_getText('transactionId'), '#12145656565'),
                           const SizedBox(height: 12),
-                          _buildPaymentRow('Result', 'Captured'),
+                          _buildPaymentRow(_getText('result'), _getText('resultValue')),
                           const SizedBox(height: 12),
-                          _buildPaymentRow('Payment Method', 'Knet'),
+                          _buildPaymentRow(_getText('paymentMethod'), 'Knet'),
+                          const SizedBox(height: 12),
+                          _buildPaymentRow('Knet', 'Knet'),
                         ],
                       ),
                     ),
@@ -261,9 +340,9 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
                 borderRadius: BorderRadius.circular(28),
               ),
             ),
-            child: const Text(
-              'ADD MEALS',
-              style: TextStyle(
+            child: Text(
+              _getText('addMeals'),
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -278,6 +357,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
   Widget _buildInfoRow(String label, String value) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
       children: [
         Text(
           label,
@@ -332,6 +412,7 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
   Widget _buildPaymentRow(String label, String value) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
       children: [
         Text(
           label,
@@ -340,14 +421,15 @@ class _OrderConfirmationPageState extends State<OrderConfirmationPage> {
             fontSize: 14,
           ),
         ),
-        Text(
-          value,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
+        if (value.isNotEmpty)
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
           ),
-        ),
       ],
     );
   }

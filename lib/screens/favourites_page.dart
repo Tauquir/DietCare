@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/language_service.dart';
 
 class FavouritesPage extends StatefulWidget {
   const FavouritesPage({super.key});
@@ -8,54 +9,169 @@ class FavouritesPage extends StatefulWidget {
 }
 
 class _FavouritesPageState extends State<FavouritesPage> {
+  final LanguageService _languageService = LanguageService();
+
+  // Translations
+  Map<String, Map<String, String>> _translations = {
+    'English': {
+      'favourites': 'Favourites',
+      'protein': 'Protein',
+      'carbs': 'Carbs',
+      'fats': 'Fats',
+      'kcal': 'kcal',
+    },
+    'Arabic': {
+      'favourites': 'المفضلة',
+      'protein': 'بروتين',
+      'carbs': 'كربوهيدرات',
+      'fats': 'دهون',
+      'kcal': 'كيلو',
+    },
+  };
+
+  String _getText(String key) {
+    return _translations[_languageService.currentLanguage]?[key] ?? _translations['English']![key]!;
+  }
+
+  bool get _isRTL => _languageService.isRTL;
+
+  // Track favorite status by index
+  Set<int> _favoriteIndices = {0, 1, 2, 3, 4};
+
   // Mock favorite meals data
-  final List<Map<String, dynamic>> _favoriteMeals = [
-    {
-      'title': 'Grilled Chicken Power Bowl',
-      'description': 'A wholesome bowl of chicken, veggies, eggs & grains.',
-      'calories': '145',
-      'protein': '21g',
-      'carbs': '21g',
-      'fats': '21g',
-      'isFavorite': true,
-    },
-    {
-      'title': 'Grilled Chicken Power Bowl',
-      'description': 'A wholesome bowl of chicken, veggies, eggs & grains.',
-      'calories': '145',
-      'protein': '21g',
-      'carbs': '21g',
-      'fats': '21g',
-      'isFavorite': true,
-    },
-    {
-      'title': 'Grilled Chicken Power Bowl',
-      'description': 'A wholesome bowl of chicken, veggies, eggs & grains.',
-      'calories': '145',
-      'protein': '21g',
-      'carbs': '21g',
-      'fats': '21g',
-      'isFavorite': true,
-    },
-    {
-      'title': 'Grilled Chicken Power Bowl',
-      'description': 'A wholesome bowl of chicken, veggies, eggs & grains.',
-      'calories': '145',
-      'protein': '21g',
-      'carbs': '21g',
-      'fats': '21g',
-      'isFavorite': true,
-    },
-    {
-      'title': 'Grilled Chicken Power Bowl',
-      'description': 'A wholesome bowl of chicken, veggies, eggs & grains.',
-      'calories': '145',
-      'protein': '21g',
-      'carbs': '21g',
-      'fats': '21g',
-      'isFavorite': true,
-    },
-  ];
+  List<Map<String, dynamic>> get _allMeals {
+    if (_isRTL) {
+      return [
+        {
+          'id': 0,
+          'title': 'طبق دجاج مشوي غني بالطاقة',
+          'description': 'وعاء صحي من الدجاج والخضروات والبيض والحبوب.',
+          'calories': '145',
+          'protein': '21g',
+          'carbs': '21g',
+          'fats': '21g',
+          'isFavorite': true,
+        },
+        {
+          'id': 1,
+          'title': 'طبق دجاج مشوي غني بالطاقة',
+          'description': 'وعاء صحي من الدجاج والخضروات والبيض والحبوب.',
+          'calories': '145',
+          'protein': '21g',
+          'carbs': '21g',
+          'fats': '21g',
+          'isFavorite': true,
+        },
+        {
+          'id': 2,
+          'title': 'طبق دجاج مشوي غني بالطاقة',
+          'description': 'وعاء صحي من الدجاج والخضروات والبيض والحبوب.',
+          'calories': '145',
+          'protein': '21g',
+          'carbs': '21g',
+          'fats': '21g',
+          'isFavorite': true,
+        },
+        {
+          'id': 3,
+          'title': 'طبق دجاج مشوي غني بالطاقة',
+          'description': 'وعاء صحي من الدجاج والخضروات والبيض والحبوب.',
+          'calories': '145',
+          'protein': '21g',
+          'carbs': '21g',
+          'fats': '21g',
+          'isFavorite': true,
+        },
+        {
+          'id': 4,
+          'title': 'طبق دجاج مشوي غني بالطاقة',
+          'description': 'وعاء صحي من الدجاج والخضروات والبيض والحبوب.',
+          'calories': '145',
+          'protein': '21g',
+          'carbs': '21g',
+          'fats': '21g',
+          'isFavorite': true,
+        },
+      ];
+    } else {
+      return [
+        {
+          'id': 0,
+          'title': 'Grilled Chicken Power Bowl',
+          'description': 'A wholesome bowl of chicken, veggies, eggs & grains.',
+          'calories': '145',
+          'protein': '21g',
+          'carbs': '21g',
+          'fats': '21g',
+          'isFavorite': true,
+        },
+        {
+          'id': 1,
+          'title': 'Grilled Chicken Power Bowl',
+          'description': 'A wholesome bowl of chicken, veggies, eggs & grains.',
+          'calories': '145',
+          'protein': '21g',
+          'carbs': '21g',
+          'fats': '21g',
+          'isFavorite': true,
+        },
+        {
+          'id': 2,
+          'title': 'Grilled Chicken Power Bowl',
+          'description': 'A wholesome bowl of chicken, veggies, eggs & grains.',
+          'calories': '145',
+          'protein': '21g',
+          'carbs': '21g',
+          'fats': '21g',
+          'isFavorite': true,
+        },
+        {
+          'id': 3,
+          'title': 'Grilled Chicken Power Bowl',
+          'description': 'A wholesome bowl of chicken, veggies, eggs & grains.',
+          'calories': '145',
+          'protein': '21g',
+          'carbs': '21g',
+          'fats': '21g',
+          'isFavorite': true,
+        },
+        {
+          'id': 4,
+          'title': 'Grilled Chicken Power Bowl',
+          'description': 'A wholesome bowl of chicken, veggies, eggs & grains.',
+          'calories': '145',
+          'protein': '21g',
+          'carbs': '21g',
+          'fats': '21g',
+          'isFavorite': true,
+        },
+      ];
+    }
+  }
+
+  // Get only favorited meals
+  List<Map<String, dynamic>> get _favoriteMeals {
+    return _allMeals.asMap().entries
+        .where((entry) => _favoriteIndices.contains(entry.key))
+        .map((entry) => entry.value)
+        .toList();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _languageService.addListener(_onLanguageChanged);
+  }
+
+  @override
+  void dispose() {
+    _languageService.removeListener(_onLanguageChanged);
+    super.dispose();
+  }
+
+  void _onLanguageChanged() {
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,12 +181,15 @@ class _FavouritesPageState extends State<FavouritesPage> {
         backgroundColor: const Color(0xFF1A1A1A),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(
+            _isRTL ? Icons.arrow_forward : Icons.arrow_back,
+            color: Colors.white,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Favourites',
-          style: TextStyle(
+        title: Text(
+          _getText('favourites'),
+          style: const TextStyle(
             color: Colors.white,
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -78,13 +197,24 @@ class _FavouritesPageState extends State<FavouritesPage> {
         ),
         centerTitle: true,
       ),
-      body: ListView.builder(
-        itemCount: _favoriteMeals.length,
-        itemBuilder: (context, index) {
-          final meal = _favoriteMeals[index];
-          return _buildMealCard(meal, index);
-        },
-      ),
+      body: _favoriteMeals.isEmpty
+          ? Center(
+              child: Text(
+                _isRTL ? 'لا توجد وجبات مفضلة' : 'No favorite meals',
+                style: const TextStyle(
+                  color: Color(0xFF9E9E9E),
+                  fontSize: 16,
+                ),
+              ),
+            )
+          : ListView.builder(
+              itemCount: _favoriteMeals.length,
+              itemBuilder: (context, index) {
+                final meal = _favoriteMeals[index];
+                final mealId = meal['id'] as int;
+                return _buildMealCard(meal, mealId);
+              },
+            ),
     );
   }
 
@@ -98,11 +228,13 @@ class _FavouritesPageState extends State<FavouritesPage> {
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
+        textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
         children: [
-          // Left side - Text content
+          // Text content (left in LTR, right in RTL)
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: _isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
               children: [
                 Text(
                   meal['title'],
@@ -122,6 +254,8 @@ class _FavouritesPageState extends State<FavouritesPage> {
                 ),
                 const SizedBox(height: 8),
                 Row(
+                  mainAxisAlignment: _isRTL ? MainAxisAlignment.end : MainAxisAlignment.start,
+                  textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
                   children: [
                     const Icon(
                       Icons.local_fire_department,
@@ -130,7 +264,7 @@ class _FavouritesPageState extends State<FavouritesPage> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      '${meal['calories']} kcal',
+                      '${meal['calories']} ${_getText('kcal')}',
                       style: const TextStyle(
                         color: Color(0xFFFF6B35),
                         fontSize: 14,
@@ -142,29 +276,31 @@ class _FavouritesPageState extends State<FavouritesPage> {
                 const SizedBox(height: 8),
                 // Nutritional breakdown
                 Row(
+                  mainAxisAlignment: _isRTL ? MainAxisAlignment.end : MainAxisAlignment.start,
+                  textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
                   children: [
-                    _buildNutritionLabel('Protein', meal['protein'], Colors.green),
+                    _buildNutritionLabel(_getText('protein'), meal['protein'], Colors.green),
                     Container(
                       width: 1,
                       height: 16,
                       color: const Color(0xFF3A3A3A),
                       margin: const EdgeInsets.symmetric(horizontal: 8),
                     ),
-                    _buildNutritionLabel('Carbs', meal['carbs'], Colors.orange),
+                    _buildNutritionLabel(_getText('carbs'), meal['carbs'], Colors.orange),
                     Container(
                       width: 1,
                       height: 16,
                       color: const Color(0xFF3A3A3A),
                       margin: const EdgeInsets.symmetric(horizontal: 8),
                     ),
-                    _buildNutritionLabel('Fats', meal['fats'], Colors.blue),
+                    _buildNutritionLabel(_getText('fats'), meal['fats'], Colors.blue),
                   ],
                 ),
               ],
             ),
           ),
           const SizedBox(width: 16),
-          // Right side - Image
+          // Image (right in LTR, left in RTL)
           Stack(
             children: [
               Container(
@@ -182,16 +318,13 @@ class _FavouritesPageState extends State<FavouritesPage> {
               ),
               Positioned(
                 top: 8,
-                right: 8,
+                right: _isRTL ? null : 8,
+                left: _isRTL ? 8 : null,
                 child: GestureDetector(
                   onTap: () {
                     setState(() {
-                      // Toggle favorite status
-                      meal['isFavorite'] = !meal['isFavorite'];
-                      if (!meal['isFavorite']) {
-                        // Remove from favorites
-                        _favoriteMeals.removeAt(index);
-                      }
+                      // Remove from favorites
+                      _favoriteIndices.remove(index);
                     });
                   },
                   child: Container(
@@ -219,6 +352,7 @@ class _FavouritesPageState extends State<FavouritesPage> {
   Widget _buildNutritionLabel(String label, String value, Color color) {
     return Row(
       mainAxisSize: MainAxisSize.min,
+      textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
       children: [
         Container(
           width: 3,

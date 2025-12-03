@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'checkout_page.dart';
+import '../services/language_service.dart';
 
 class SubscriptionPage extends StatefulWidget {
   const SubscriptionPage({super.key});
@@ -10,10 +11,11 @@ class SubscriptionPage extends StatefulWidget {
 }
 
 class _SubscriptionPageState extends State<SubscriptionPage> {
+  final LanguageService _languageService = LanguageService();
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _phoneController = TextEditingController();
-  final _cityController = TextEditingController();
+  final _nameController = TextEditingController(text: 'Ahmed Rashid');
+  final _phoneController = TextEditingController(text: '88776644');
+  final _cityController = TextEditingController(text: 'Kuwait City');
   final _blockController = TextEditingController();
   final _streetController = TextEditingController();
   final _avenueController = TextEditingController();
@@ -22,8 +24,69 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
   final _flatController = TextEditingController();
   final _instructionsController = TextEditingController();
 
+  // Translations
+  Map<String, Map<String, String>> _translations = {
+    'English': {
+      'title': 'Where should we deliver?',
+      'subtitle': 'Get your meals delivered fast and fresh.',
+      'name': 'Name',
+      'nameHint': 'Ahmed Rashid',
+      'nameError': 'Please enter your name',
+      'phoneNumber': 'Phone Number',
+      'phoneHint': '88776644',
+      'phoneError': 'Please enter phone number',
+      'city': 'City',
+      'cityHint': 'Kuwait City',
+      'cityError': 'Please enter city',
+      'block': 'Block',
+      'street': 'Street',
+      'avenue': 'Avenue',
+      'building': 'Building',
+      'floor': 'Floor',
+      'flat': 'Flat',
+      'required': 'Required',
+      'deliveryInstructions': 'Delivery Instructions',
+      'next': 'NEXT',
+    },
+    'Arabic': {
+      'title': 'أين تريد أن توصل الطلب؟',
+      'subtitle': 'احصل على وجباتك طازجة وسريعة.',
+      'name': 'الاسم',
+      'nameHint': 'الاسم',
+      'nameError': 'يرجى إدخال الاسم',
+      'phoneNumber': 'رقم الهاتف',
+      'phoneHint': '88776644',
+      'phoneError': 'يرجى إدخال رقم الهاتف',
+      'city': 'المدينة',
+      'cityHint': 'مدينة الكويت',
+      'cityError': 'يرجى إدخال المدينة',
+      'block': 'القطعة',
+      'street': 'الشارع',
+      'avenue': 'الجادة',
+      'building': 'المبنى',
+      'floor': 'الطابق',
+      'flat': 'الشقة',
+      'required': 'مطلوب',
+      'deliveryInstructions': 'تعليمات التوصيل',
+      'next': 'التالي',
+    },
+  };
+
+  String _getText(String key) {
+    return _translations[_languageService.currentLanguage]?[key] ?? _translations['English']![key]!;
+  }
+
+  bool get _isRTL => _languageService.isRTL;
+
+  @override
+  void initState() {
+    super.initState();
+    _languageService.addListener(_onLanguageChanged);
+  }
+
   @override
   void dispose() {
+    _languageService.removeListener(_onLanguageChanged);
     _nameController.dispose();
     _phoneController.dispose();
     _cityController.dispose();
@@ -37,6 +100,10 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
     super.dispose();
   }
 
+  void _onLanguageChanged() {
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -45,20 +112,14 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
         backgroundColor: const Color(0xFF1A1A1A),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(
+            _isRTL ? Icons.arrow_forward : Icons.arrow_back,
+            color: Colors.white,
+          ),
           onPressed: () {
             Navigator.of(context).pop();
           },
         ),
-        title: const Text(
-          'Where should we deliver?',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        centerTitle: true,
       ),
       body: Column(
         children: [
@@ -76,31 +137,31 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                         child: Column(
                           children: [
                             Container(
-                              width: 80,
-                              height: 80,
+                              width: 100,
+                              height: 100,
                               decoration: BoxDecoration(
                                 color: const Color(0xFF2A2A2A),
-                                borderRadius: BorderRadius.circular(40),
+                                shape: BoxShape.circle,
                               ),
                               child: const Icon(
                                 Icons.location_on,
                                 color: Color(0xFFFF6B35),
-                                size: 40,
+                                size: 50,
                               ),
                             ),
-                            const SizedBox(height: 16),
-                            const Text(
-                              'Where should we deliver?',
-                              style: TextStyle(
+                            const SizedBox(height: 24),
+                            Text(
+                              _getText('title'),
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                             const SizedBox(height: 8),
-                            const Text(
-                              'Get your meals delivered fast and fresh.',
-                              style: TextStyle(
+                            Text(
+                              _getText('subtitle'),
+                              style: const TextStyle(
                                 color: Color(0xFF9E9E9E),
                                 fontSize: 14,
                               ),
@@ -113,10 +174,10 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                       // Full Name Field
                       _buildTextField(
                         controller: _nameController,
-                        hint: 'Ahmed Rashid',
+                        hint: _getText('nameHint'),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Please enter your name';
+                            return _getText('nameError');
                           }
                           return null;
                         },
@@ -158,11 +219,11 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                             flex: 2,
                             child: _buildTextField(
                               controller: _phoneController,
-                              hint: '88776644',
+                              hint: _getText('phoneHint'),
                               keyboardType: TextInputType.phone,
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
-                                  return 'Please enter phone number';
+                                  return _getText('phoneError');
                                 }
                                 return null;
                               },
@@ -176,10 +237,10 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                       // City Field
                       _buildTextField(
                         controller: _cityController,
-                        hint: 'Kuwait City',
+                        hint: _getText('cityHint'),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Please enter city';
+                            return _getText('cityError');
                           }
                           return null;
                         },
@@ -193,10 +254,10 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                           Expanded(
                             child: _buildTextField(
                               controller: _blockController,
-                              hint: 'Block',
+                              hint: _getText('block'),
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
-                                  return 'Required';
+                                  return _getText('required');
                                 }
                                 return null;
                               },
@@ -206,10 +267,10 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                           Expanded(
                             child: _buildTextField(
                               controller: _streetController,
-                              hint: 'Street',
+                              hint: _getText('street'),
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
-                                  return 'Required';
+                                  return _getText('required');
                                 }
                                 return null;
                               },
@@ -226,10 +287,10 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                           Expanded(
                             child: _buildTextField(
                               controller: _avenueController,
-                              hint: 'Avenue',
+                              hint: _getText('avenue'),
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
-                                  return 'Required';
+                                  return _getText('required');
                                 }
                                 return null;
                               },
@@ -239,10 +300,10 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                           Expanded(
                             child: _buildTextField(
                               controller: _buildingController,
-                              hint: 'Building',
+                              hint: _getText('building'),
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
-                                  return 'Required';
+                                  return _getText('required');
                                 }
                                 return null;
                               },
@@ -259,10 +320,10 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                           Expanded(
                             child: _buildTextField(
                               controller: _floorController,
-                              hint: 'Floor',
+                              hint: _getText('floor'),
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
-                                  return 'Required';
+                                  return _getText('required');
                                 }
                                 return null;
                               },
@@ -272,10 +333,10 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                           Expanded(
                             child: _buildTextField(
                               controller: _flatController,
-                              hint: 'Flat',
+                              hint: _getText('flat'),
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
-                                  return 'Required';
+                                  return _getText('required');
                                 }
                                 return null;
                               },
@@ -289,7 +350,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                       // Delivery Instructions Field
                       _buildTextField(
                         controller: _instructionsController,
-                        hint: 'Delivery Instructions',
+                        hint: _getText('deliveryInstructions'),
                         maxLines: 3,
                       ),
                       
@@ -335,9 +396,9 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                 borderRadius: BorderRadius.circular(28),
               ),
             ),
-            child: const Text(
-              'NEXT',
-              style: TextStyle(
+            child: Text(
+              _getText('next'),
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
