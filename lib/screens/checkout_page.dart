@@ -99,30 +99,57 @@ class _CheckoutPageState extends State<CheckoutPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF1A1A1A),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF1A1A1A),
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            _isRTL ? Icons.arrow_forward : Icons.arrow_back,
-            color: Colors.white,
-          ),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
-        ),
-        title: Text(
-          _getText('checkout'),
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        centerTitle: true,
-      ),
       body: Column(
         children: [
+          // Custom Header (same as Help Center)
+          Container(
+            width: double.infinity,
+            height: 140,
+            decoration: BoxDecoration(
+              color: const Color(0xFF2B2A2A),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 6.31,
+                  spreadRadius: 0,
+                  offset: const Offset(0, 0.63),
+                ),
+              ],
+            ),
+            child: SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                child: Row(
+                  textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
+                  children: [
+                    IconButton(
+                      icon: Icon(
+                        _isRTL ? Icons.arrow_forward : Icons.arrow_back,
+                        color: Colors.white,
+                      ),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                    Expanded(
+                      child: Text(
+                        _getText('checkout'),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 48), // Balance the back button width
+                  ],
+                ),
+              ),
+            ),
+          ),
+          // Main Content
           Expanded(
             child: SingleChildScrollView(
               child: Padding(
@@ -363,9 +390,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 ),
               ),
             ),
-          ),
-        ],
-      ),
+
+        ),
+      ]),
       bottomNavigationBar: Container(
         width: double.infinity,
         padding: const EdgeInsets.all(20),

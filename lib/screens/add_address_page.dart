@@ -4,19 +4,19 @@ import '../services/user_service.dart';
 import '../services/auth_storage_service.dart';
 
 class AddAddressPage extends StatefulWidget {
-  final double latitude;
-  final double longitude;
-  final String address;
-  final String street;
-  final String fullAddress;
+  final double? latitude;
+  final double? longitude;
+  final String? address;
+  final String? street;
+  final String? fullAddress;
 
   const AddAddressPage({
     super.key,
-    required this.latitude,
-    required this.longitude,
-    required this.address,
-    required this.street,
-    required this.fullAddress,
+    this.latitude,
+    this.longitude,
+    this.address,
+    this.street,
+    this.fullAddress,
   });
 
   @override
@@ -34,10 +34,13 @@ class _AddAddressPageState extends State<AddAddressPage> {
   final TextEditingController _buildingController = TextEditingController();
   final TextEditingController _floorController = TextEditingController();
   final TextEditingController _flatController = TextEditingController();
+  final TextEditingController _stateController = TextEditingController();
+  final TextEditingController _zipCodeController = TextEditingController();
   
   String _selectedCountryCode = '+965';
   String _selectedTownCity = '';
   bool _isLoading = false;
+  bool _isDefault = false;
 
   // Translations
   Map<String, Map<String, String>> _translations = {
@@ -51,12 +54,19 @@ class _AddAddressPageState extends State<AddAddressPage> {
       'building': 'Building',
       'floor': 'Floor',
       'flat': 'Flat',
+      'state': 'State/Province',
+      'zipCode': 'Zip Code',
+      'isDefault': 'Set as Default Address',
       'saveAddress': 'SAVE ADDRESS',
       'change': 'CHANGE',
       'deliveringTo': 'Delivering healthy meals to',
       'saveSuccess': 'Address saved successfully',
       'saveError': 'Failed to save address',
       'networkError': 'Network error. Please check your connection.',
+      'enterStreet': 'Please enter street address',
+      'enterCity': 'Please enter city',
+      'enterState': 'Please enter state/province',
+      'enterZipCode': 'Please enter zip code',
     },
     'Arabic': {
       'title': 'إضافة عنوان',
@@ -68,12 +78,19 @@ class _AddAddressPageState extends State<AddAddressPage> {
       'building': 'المبنى',
       'floor': 'الطابق',
       'flat': 'الشقة',
+      'state': 'الولاية/المحافظة',
+      'zipCode': 'الرمز البريدي',
+      'isDefault': 'تعيين كعنوان افتراضي',
       'saveAddress': 'حفظ العنوان',
       'change': 'تغيير',
       'deliveringTo': 'توصيل الوجبات الصحية إلى',
       'saveSuccess': 'تم حفظ العنوان بنجاح',
       'saveError': 'فشل حفظ العنوان',
       'networkError': 'خطأ في الشبكة. يرجى التحقق من اتصالك.',
+      'enterStreet': 'يرجى إدخال عنوان الشارع',
+      'enterCity': 'يرجى إدخال المدينة',
+      'enterState': 'يرجى إدخال الولاية/المحافظة',
+      'enterZipCode': 'يرجى إدخال الرمز البريدي',
     },
   };
 
@@ -87,9 +104,13 @@ class _AddAddressPageState extends State<AddAddressPage> {
   void initState() {
     super.initState();
     _languageService.addListener(_onLanguageChanged);
-    // Pre-fill address from location selection
-    _townCityController.text = widget.address.split(',')[0].trim();
-    _streetController.text = widget.street;
+    // Pre-fill address from location selection if provided
+    if (widget.address != null && widget.address!.isNotEmpty) {
+      _townCityController.text = widget.address!.split(',')[0].trim();
+    }
+    if (widget.street != null && widget.street!.isNotEmpty) {
+      _streetController.text = widget.street!;
+    }
   }
 
   @override
@@ -112,18 +133,24 @@ class _AddAddressPageState extends State<AddAddressPage> {
   }
 
   Future<void> _saveAddress() async {
-    if (_addressNameController.text.trim().isEmpty) {
-      _showError('Please enter address name');
+    // Validate required fields according to API spec
+    if (_streetController.text.trim().isEmpty) {
+      _showError(_getText('enterStreet'));
       return;
     }
 
-    if (_fullNameController.text.trim().isEmpty) {
-      _showError('Please enter full name');
+    if (_townCityController.text.trim().isEmpty) {
+      _showError(_getText('enterCity'));
       return;
     }
 
-    if (_phoneController.text.trim().isEmpty) {
-      _showError('Please enter phone number');
+    if (_stateController.text.trim().isEmpty) {
+      _showError(_getText('enterState'));
+      return;
+    }
+
+    if (_zipCodeController.text.trim().isEmpty) {
+      _showError(_getText('enterZipCode'));
       return;
     }
 
@@ -142,34 +169,37 @@ class _AddAddressPageState extends State<AddAddressPage> {
         return;
       }
 
-      // Build full address string
-      final fullAddressParts = [
-        _buildingController.text.trim(),
+      // Build street address from form fields
+      // Combine: street, avenue, building, floor, flat
+      final streetParts = [
         _streetController.text.trim(),
-        _avenueController.text.trim(),
-        _townCityController.text.trim(),
+        if (_avenueController.text.trim().isNotEmpty) _avenueController.text.trim(),
+        if (_buildingController.text.trim().isNotEmpty) 'Building ${_buildingController.text.trim()}',
+        if (_floorController.text.trim().isNotEmpty) 'Floor ${_floorController.text.trim()}',
+        if (_flatController.text.trim().isNotEmpty) 'Flat ${_flatController.text.trim()}',
       ].where((part) => part.isNotEmpty).toList();
       
-      final fullAddress = fullAddressParts.join(', ');
+      final streetAddress = streetParts.join(', ');
 
-      // Call API to save address
+      // Call API to save address with required fields according to API spec
       final response = await UserService.addAddress(
         token: token,
         type: 'home',
-        street: fullAddress,
+        street: streetAddress,
         city: _townCityController.text.trim(),
-        state: _townCityController.text.trim(),
-        zipCode: '',
+        state: _stateController.text.trim(),
+        zipCode: _zipCodeController.text.trim(),
         country: 'Kuwait',
-        isDefault: false,
+        isDefault: _isDefault,
+        // Optional fields (if API supports them)
         latitude: widget.latitude,
         longitude: widget.longitude,
-        addressName: _addressNameController.text.trim(),
-        fullName: _fullNameController.text.trim(),
-        phone: _phoneController.text.trim(),
-        building: _buildingController.text.trim(),
-        floor: _floorController.text.trim(),
-        flat: _flatController.text.trim(),
+        addressName: _addressNameController.text.trim().isNotEmpty ? _addressNameController.text.trim() : null,
+        fullName: _fullNameController.text.trim().isNotEmpty ? _fullNameController.text.trim() : null,
+        phone: _phoneController.text.trim().isNotEmpty ? _phoneController.text.trim() : null,
+        building: _buildingController.text.trim().isNotEmpty ? _buildingController.text.trim() : null,
+        floor: _floorController.text.trim().isNotEmpty ? _floorController.text.trim() : null,
+        flat: _flatController.text.trim().isNotEmpty ? _flatController.text.trim() : null,
       );
 
       setState(() {
@@ -184,7 +214,17 @@ class _AddAddressPageState extends State<AddAddressPage> {
               backgroundColor: Colors.green,
             ),
           );
-          Navigator.of(context).popUntil((route) => route.isFirst || route.settings.name == '/address');
+          // Pop back to AddressPage
+          // If we have location data, we came from LocationSelectionPage, so pop twice
+          // Otherwise, we came directly, so pop once
+          if (widget.latitude != null && widget.longitude != null) {
+            // Came from LocationSelectionPage -> pop twice to get back to AddressPage
+            Navigator.of(context).pop(); // Pop AddAddressPage
+            Navigator.of(context).pop(); // Pop LocationSelectionPage
+          } else {
+            // Came directly from AddressPage -> pop once
+            Navigator.of(context).pop();
+          }
         }
       } else {
         _showError(response['message'] ?? _getText('saveError'));
@@ -298,93 +338,99 @@ class _AddAddressPageState extends State<AddAddressPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Address display card
-                    GestureDetector(
-                      onTap: () {
-                        // Navigate back to location selection to change location
-                        Navigator.pop(context);
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(16.0),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF2A2A2A),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                        textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
-                        children: [
-                          // Location icon
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF1B1B1B),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.location_on,
-                              color: Color(0xFFFF6B35),
-                              size: 24,
-                            ),
+                    // Address display card (only show if location data is provided)
+                    if (widget.address != null && widget.address!.isNotEmpty)
+                      GestureDetector(
+                        onTap: () {
+                          // Navigate back to location selection to change location
+                          Navigator.pop(context);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(16.0),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF2A2A2A),
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          const SizedBox(width: 12),
-                          // Address text
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: _isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  widget.address,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  widget.street,
-                                  style: const TextStyle(
-                                    color: Color(0xFF9E9E9E),
-                                    fontSize: 12,
-                                  ),
-                                  textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  widget.fullAddress,
-                                  style: const TextStyle(
-                                    color: Color(0xFF9E9E9E),
-                                    fontSize: 12,
-                                  ),
-                                  textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          // Change button
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF1B1B1B),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              _getText('change'),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
+                          child: Row(
+                          textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
+                          children: [
+                            // Location icon
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF1B1B1B),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.location_on,
+                                color: Color(0xFFFF6B35),
+                                size: 24,
                               ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 12),
+                            // Address text
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: _isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    widget.address!,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
+                                  ),
+                                  if (widget.street != null && widget.street!.isNotEmpty) ...[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      widget.street!,
+                                      style: const TextStyle(
+                                        color: Color(0xFF9E9E9E),
+                                        fontSize: 12,
+                                      ),
+                                      textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
+                                    ),
+                                  ],
+                                  if (widget.fullAddress != null && widget.fullAddress!.isNotEmpty) ...[
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      widget.fullAddress!,
+                                      style: const TextStyle(
+                                        color: Color(0xFF9E9E9E),
+                                        fontSize: 12,
+                                      ),
+                                      textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            // Change button
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF1B1B1B),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                _getText('change'),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    ),
-                    const SizedBox(height: 24),
+                      ),
+                    if (widget.address != null && widget.address!.isNotEmpty)
+                      const SizedBox(height: 24),
                     // Address Name
                     _buildTextField(
                       controller: _addressNameController,
@@ -508,6 +554,53 @@ class _AddAddressPageState extends State<AddAddressPage> {
                             controller: _flatController,
                             hintText: _getText('flat'),
                             keyboardType: TextInputType.text,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    // State and Zip Code Row
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildTextField(
+                            controller: _stateController,
+                            hintText: _getText('state'),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildTextField(
+                            controller: _zipCodeController,
+                            hintText: _getText('zipCode'),
+                            keyboardType: TextInputType.number,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    // Default Address Checkbox
+                    Row(
+                      textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
+                      children: [
+                        Checkbox(
+                          value: _isDefault,
+                          onChanged: (bool? value) {
+                            setState(() {
+                              _isDefault = value ?? false;
+                            });
+                          },
+                          activeColor: const Color(0xFFFF6B35),
+                          checkColor: Colors.white,
+                        ),
+                        Expanded(
+                          child: Text(
+                            _getText('isDefault'),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                            ),
+                            textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
                           ),
                         ),
                       ],

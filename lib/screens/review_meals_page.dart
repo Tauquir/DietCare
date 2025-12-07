@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/language_service.dart';
+import 'confirmed_meals_page.dart';
 
 class ReviewMealsPage extends StatefulWidget {
   final DateTime selectedDate;
@@ -61,10 +62,10 @@ class _ReviewMealsPageState extends State<ReviewMealsPage> {
   String _formatDateForButton(DateTime date) {
     if (_isRTL) {
       final monthsAr = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
-      return '${monthsAr[date.month - 1]} ${date.day},${date.year}';
+      return '${monthsAr[date.month - 1]} ${date.day}, ${date.year}';
     } else {
       final months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-      return '${months[date.month - 1]} ${date.day},${date.year}';
+      return '${months[date.month - 1]} ${date.day}, ${date.year}';
     }
   }
 
@@ -178,8 +179,36 @@ class _ReviewMealsPageState extends State<ReviewMealsPage> {
                       color: Colors.white,
                     ),
                     onPressed: () => Navigator.pop(context),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
                   ),
-                  const Spacer(),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 16),
+                      child: Column(
+                        crossAxisAlignment: _isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                        textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
+                        children: [
+                          Text(
+                            _getText('reviewMeals'),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _getText('checkSelections'),
+                            style: const TextStyle(
+                              color: Color(0xFF9E9E9E),
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
@@ -210,31 +239,6 @@ class _ReviewMealsPageState extends State<ReviewMealsPage> {
                 ],
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                crossAxisAlignment: _isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-                textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
-                children: [
-                  Text(
-                    _getText('reviewMeals'),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _getText('checkSelections'),
-                    style: const TextStyle(
-                      color: Color(0xFF9E9E9E),
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-            ),
             const SizedBox(height: 24),
 
             // Content
@@ -248,12 +252,12 @@ class _ReviewMealsPageState extends State<ReviewMealsPage> {
                     _buildSection(_getText('meals'), 3, 3, _selectedMeals),
                     const SizedBox(height: 32),
 
-                    // Salads Section
-                    _buildSection(_getText('salads'), 1, 0, _selectedSalads),
+                    // Salads Section - 0/3
+                    _buildSection(_getText('salads'), 0, 3, []),
                     const SizedBox(height: 32),
 
-                    // Snacks Section
-                    _buildSection(_getText('snacks'), 2, 1, _selectedSnacks),
+                    // Salads Section - 1/3
+                    _buildSection(_getText('salads'), 1, 3, _selectedSnacks),
                     const SizedBox(height: 32),
 
                     // Information Card
@@ -261,12 +265,8 @@ class _ReviewMealsPageState extends State<ReviewMealsPage> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFF6B35).withOpacity(0.2),
+                        color: const Color(0xFFB34712), // Dark orange background
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: const Color(0xFFFF6B35).withOpacity(0.3),
-                          width: 1,
-                        ),
                       ),
                       child: Row(
                         textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
@@ -274,14 +274,20 @@ class _ReviewMealsPageState extends State<ReviewMealsPage> {
                           Container(
                             width: 40,
                             height: 40,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFF6B35),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFFF6B35),
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(
-                              Icons.info,
+                            child: const Center(
+                              child: Text(
+                                'i',
+                                style: TextStyle(
                               color: Colors.white,
-                              size: 24,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
                             ),
                           ),
                           const SizedBox(width: 16),
@@ -322,23 +328,106 @@ class _ReviewMealsPageState extends State<ReviewMealsPage> {
       ),
       // Bottom Summary Bar
       bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(20),
         decoration: const BoxDecoration(
           color: Color(0xFF2A2A2A),
-          border: Border(
-            top: BorderSide(color: Color(0xFF3A3A3A), width: 0.5),
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(16),
+            topRight: Radius.circular(16),
           ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Row(
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
               children: [
-                // Total Calories (left in LTR, right in RTL)
+                  // Nutritional Summary (left in LTR, right in RTL)
+                  Row(
+                    textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
+                    children: [
+                      Text(
+                        _getText('protein'),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                        ),
+                      ),
+                      Container(
+                        width: 1,
+                        height: 16,
+                        color: Colors.green,
+                        margin: const EdgeInsets.symmetric(horizontal: 6),
+                      ),
+                      Text(
+                        '21g',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Container(
+                        width: 1,
+                        height: 16,
+                        color: Colors.blue,
+                        margin: const EdgeInsets.symmetric(horizontal: 6),
+                      ),
+                      Text(
+                        _getText('carbs'),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                        ),
+                      ),
+                      Container(
+                        width: 1,
+                        height: 16,
+                        color: Colors.blue,
+                        margin: const EdgeInsets.symmetric(horizontal: 6),
+                      ),
+                      Text(
+                        '21g',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Container(
+                        width: 1,
+                        height: 16,
+                        color: Colors.blue,
+                        margin: const EdgeInsets.symmetric(horizontal: 6),
+                      ),
+                      Text(
+                        _getText('fats'),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                        ),
+                      ),
+                      Container(
+                        width: 1,
+                        height: 16,
+                        color: Colors.blue,
+                        margin: const EdgeInsets.symmetric(horizontal: 6),
+                      ),
+                      Text(
+                        '21g',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  // Total Calories (right in LTR, left in RTL)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: const Color(0xFF1A1A1A),
                     borderRadius: BorderRadius.circular(20),
@@ -350,47 +439,27 @@ class _ReviewMealsPageState extends State<ReviewMealsPage> {
                       const Icon(
                         Icons.local_fire_department,
                         color: Color(0xFFFF6B35),
-                        size: 20,
+                          size: 16,
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        '1000 ${_getText('kcal')}',
+                          'Kcal 1000',
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 14,
+                            fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                     ],
                   ),
                 ),
-                // Nutritional Summary (right in LTR, left in RTL)
-                Row(
-                  textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
-                  children: [
-                    _buildNutritionLabel(_getText('protein'), '21g'),
-                    Container(
-                      width: 1,
-                      height: 16,
-                      color: Colors.green,
-                      margin: const EdgeInsets.symmetric(horizontal: 8),
-                    ),
-                    _buildNutritionLabel(_getText('carbs'), '21g'),
-                    Container(
-                      width: 1,
-                      height: 16,
-                      color: Colors.green,
-                      margin: const EdgeInsets.symmetric(horizontal: 8),
-                    ),
-                    _buildNutritionLabel(_getText('fats'), '21g'),
-                  ],
-                ),
-              ],
+                ],
+              ),
             ),
-            const SizedBox(height: 16),
             // Confirm Button
             Container(
               width: double.infinity,
+              margin: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
                   colors: [
@@ -404,7 +473,13 @@ class _ReviewMealsPageState extends State<ReviewMealsPage> {
               ),
               child: ElevatedButton(
                 onPressed: () {
-                  // Handle confirm
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(
+                      builder: (context) => ConfirmedMealsPage(
+                        selectedDate: widget.selectedDate,
+                      ),
+                    ),
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.transparent,
@@ -427,30 +502,6 @@ class _ReviewMealsPageState extends State<ReviewMealsPage> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildNutritionLabel(String label, String value) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 12,
-          ),
-        ),
-        const SizedBox(width: 4),
-        Text(
-          value,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
     );
   }
 
@@ -482,6 +533,7 @@ class _ReviewMealsPageState extends State<ReviewMealsPage> {
                 ],
               ),
             ),
+            if (current < total)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               decoration: BoxDecoration(
@@ -499,8 +551,10 @@ class _ReviewMealsPageState extends State<ReviewMealsPage> {
             ),
           ],
         ),
+        if (items.isNotEmpty) ...[
         const SizedBox(height: 16),
         ...items.map((meal) => _buildMealEntry(meal)),
+        ],
       ],
     );
   }
@@ -572,21 +626,81 @@ class _ReviewMealsPageState extends State<ReviewMealsPage> {
                   mainAxisAlignment: _isRTL ? MainAxisAlignment.end : MainAxisAlignment.start,
                   textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
                   children: [
-                    _buildNutritionValue(_getText('protein'), meal['protein']),
+                    Text(
+                      _getText('protein'),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                      ),
+                    ),
                     Container(
                       width: 1,
                       height: 12,
                       color: Colors.green,
                       margin: const EdgeInsets.symmetric(horizontal: 4),
                     ),
-                    _buildNutritionValue(_getText('carbs'), meal['carbs']),
+                    Text(
+                      meal['protein'],
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     Container(
                       width: 1,
                       height: 12,
-                      color: Colors.green,
+                      color: Colors.blue,
                       margin: const EdgeInsets.symmetric(horizontal: 4),
                     ),
-                    _buildNutritionValue(_getText('fats'), meal['fats']),
+                    Text(
+                      _getText('carbs'),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                      ),
+                    ),
+                    Container(
+                      width: 1,
+                      height: 12,
+                      color: Colors.blue,
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                    ),
+                    Text(
+                      meal['carbs'],
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Container(
+                      width: 1,
+                      height: 12,
+                      color: Colors.blue,
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                    ),
+                    Text(
+                      _getText('fats'),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                      ),
+                    ),
+                    Container(
+                      width: 1,
+                      height: 12,
+                      color: Colors.blue,
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                    ),
+                    Text(
+                      meal['fats'],
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ],
                 ),
               ],
@@ -595,7 +709,7 @@ class _ReviewMealsPageState extends State<ReviewMealsPage> {
           const SizedBox(width: 16),
           // Quantity (right in LTR, left in RTL)
           Text(
-            '${_getText('quantity')} ${meal['quantity']}',
+            'Qty:${meal['quantity']}',
             style: const TextStyle(
               color: Colors.white,
               fontSize: 14,
@@ -607,27 +721,5 @@ class _ReviewMealsPageState extends State<ReviewMealsPage> {
     );
   }
 
-  Widget _buildNutritionValue(String label, String value) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          '$label ',
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 10,
-          ),
-        ),
-        Text(
-          value,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
-    );
-  }
 }
 

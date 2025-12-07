@@ -11,7 +11,7 @@ class GoalSelectionPage extends StatefulWidget {
 
 class _GoalSelectionPageState extends State<GoalSelectionPage> {
   final LanguageService _languageService = LanguageService();
-  int _selectedGoalIndex = 0; // 0: Lose Weight, 1: Maintain Weight, 2: Gain Muscle, 3: Gain Muscle/Lose Weight
+  int? _selectedGoalIndex; // null: no selection, 0: Lose Weight, 1: Maintain Weight, 2: Gain Muscle, 3: Gain Muscle/Lose Weight
 
   // Translations
   Map<String, Map<String, String>> _translations = {
@@ -210,8 +210,85 @@ class _GoalSelectionPageState extends State<GoalSelectionPage> {
   }
 
   Widget _buildGoalCard(int index, String title) {
-    final isSelected = _selectedGoalIndex == index;
+    final isSelected = _selectedGoalIndex != null && _selectedGoalIndex == index;
     
+    Widget cardContent = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+      child: Row(
+        textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
+        children: [
+          // Text
+          Expanded(
+            child: Text(
+              title,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+              textAlign: _isRTL ? TextAlign.right : TextAlign.left,
+            ),
+          ),
+          const SizedBox(width: 16),
+          // Placeholder for illustration (you can replace with actual images)
+          Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              color: const Color(0xFF3A3A3A),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.fitness_center,
+              color: Color(0xFF9E9E9E),
+              size: 40,
+            ),
+          ),
+        ],
+      ),
+    );
+
+    // Wrap with gradient border if selected
+    if (isSelected) {
+      return GestureDetector(
+        onTap: () {
+          setState(() {
+            _selectedGoalIndex = index;
+          });
+        },
+        child: Container(
+          width: 372,
+          height: 88,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+              colors: [
+                Color(0xFFFF722D),
+                Color(0xFFFFC2A4),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(15.15),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.25),
+                offset: const Offset(0, 2.53),
+                blurRadius: 2.53,
+              ),
+            ],
+          ),
+          child: Container(
+            margin: const EdgeInsets.all(1.89),
+            decoration: BoxDecoration(
+              color: const Color(0xFF2B2A2A),
+              borderRadius: BorderRadius.circular(15.15 - 1.89),
+            ),
+            child: cardContent,
+          ),
+        ),
+      );
+    }
+
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -219,49 +296,20 @@ class _GoalSelectionPageState extends State<GoalSelectionPage> {
         });
       },
       child: Container(
-        padding: const EdgeInsets.all(20),
+        width: 372,
+        height: 88,
         decoration: BoxDecoration(
-          color: const Color(0xFF2A2A2A),
-          borderRadius: BorderRadius.circular(16),
-          border: isSelected
-              ? Border.all(
-                  color: const Color(0xFFFF6B35),
-                  width: 2,
-                )
-              : null,
-        ),
-        child: Row(
-          textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
-          children: [
-            // Text
-            Expanded(
-              child: Text(
-                title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
-                textAlign: _isRTL ? TextAlign.right : TextAlign.left,
-              ),
-            ),
-            const SizedBox(width: 16),
-            // Placeholder for illustration (you can replace with actual images)
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                color: const Color(0xFF3A3A3A),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(
-                Icons.fitness_center,
-                color: Color(0xFF9E9E9E),
-                size: 40,
-              ),
+          color: const Color(0xFF2B2A2A),
+          borderRadius: BorderRadius.circular(15.15),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.25),
+              offset: const Offset(0, 2.53),
+              blurRadius: 2.53,
             ),
           ],
         ),
+        child: cardContent,
       ),
     );
   }

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'login_page.dart';
+import 'main_page.dart';
 import '../services/language_service.dart';
+import '../services/auth_storage_service.dart';
 
 class LanguageSelectionPage extends StatefulWidget {
   const LanguageSelectionPage({super.key});
@@ -76,38 +79,37 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
             // Language Icon positioned at specific coordinates
             Positioned(
               top: 125,
-              left: 138,
+              left: 0,
+              right: 0,
               child: Opacity(
                 opacity: 1,
-                child: SvgPicture.asset(
-                  'assets/chooselanguage.svg',
-                  width: 125,
-                  height: 125,
+                child: Center(
+                  child: SvgPicture.asset(
+                    'assets/svg/language.svg',
+                    width: 125,
+                    height: 125,
+                  ),
                 ),
               ),
             ),
-            // Title "Choose Your Language" positioned at specific coordinates
+            // Title "Choose Your Language" positioned directly below the icon
             Positioned(
               top: 275,
-              left: 52,
+              left: 0,
+              right: 0,
               child: Opacity(
                 opacity: 1,
-                child: SizedBox(
-                  width: 297,
-                  height: 33,
-                  child: Center(
-                    child: Text(
-                      _getText('title'),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 26,
-                        fontWeight: FontWeight.w700,
-                        fontFamily: 'Onest',
-                        height: 32.16 / 26, // line-height / font-size
-                        letterSpacing: 0.0,
-                      ),
-                      textAlign: TextAlign.center,
+                child: Center(
+                  child: Text(
+                    _getText('title'),
+                    style: GoogleFonts.onest(
+                      color: Colors.white,
+                      fontSize: 26,
+                      fontWeight: FontWeight.w700,
+                      height: 1.2,
+                      letterSpacing: 0.0,
                     ),
+                    textAlign: TextAlign.center,
                   ),
                 ),
               ),
@@ -124,11 +126,10 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
                   child: Center(
                     child: Text(
                       _getText('subtitle'),
-                      style: const TextStyle(
-                        color: Color(0xFF7A7A7A),
+                      style: GoogleFonts.onest(
+                        color: const Color(0xFF7A7A7A),
                         fontSize: 15,
                         fontWeight: FontWeight.w400,
-                        fontFamily: 'Onest',
                         height: 20.73 / 15, // line-height / font-size
                         letterSpacing: 0.0,
                       ),
@@ -161,7 +162,7 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
                           _buildLanguageOption(
                             'English',
                             'EN',
-                            '🇺🇸',
+                            'assets/svg/english.svg',
                             'English',
                             selectedLanguage == 'English',
                           ),
@@ -174,7 +175,7 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
                           _buildLanguageOption(
                             'عربي',
                             'AR',
-                            '🇰🇼',
+                            'assets/svg/arabic.svg',
                             'Arabic',
                             selectedLanguage == 'Arabic',
                           ),
@@ -197,9 +198,9 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
                   child: Container(
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFFFE8347), Color(0xFFA43B08)],
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
+                        colors: [Color(0xFFFF722D), Color(0xFFB34712)],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
                       ),
                       borderRadius: BorderRadius.circular(25.13),
                     ),
@@ -207,10 +208,24 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
                       onPressed: () async {
                         // Save selected language
                         await _languageService.setLanguage(selectedLanguage);
-                        // Navigate to login screen
-                        Navigator.of(context).pushReplacement(
-                          MaterialPageRoute(builder: (context) => const LoginPage()),
-                        );
+                        
+                        // Check if user is authenticated
+                        final isAuthenticated = await AuthStorageService.isAuthenticated();
+                        
+                        if (!mounted) return;
+                        
+                        // Navigate based on authentication status
+                        if (isAuthenticated) {
+                          // User is logged in, navigate to home page
+                          Navigator.of(context).pushReplacement(
+                            MaterialPageRoute(builder: (context) => const MainPage()),
+                          );
+                        } else {
+                          // User is not logged in, navigate to login screen
+                          Navigator.of(context).pushReplacement(
+                            MaterialPageRoute(builder: (context) => const LoginPage()),
+                          );
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.transparent,
@@ -294,7 +309,7 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
   Widget _buildLanguageOption(
     String languageName,
     String languageCode,
-    String flagEmoji,
+    String iconPath,
     String languageKey,
     bool isSelected,
   ) {
@@ -310,7 +325,7 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
         padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.5),
         child: Row(
           children: [
-            // Flag Icon
+            // Language Icon
             Container(
               width: 40,
               height: 40,
@@ -319,9 +334,11 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
                 color: const Color(0xFF3A3A3A),
               ),
               child: Center(
-                child: Text(
-                  flagEmoji,
-                  style: const TextStyle(fontSize: 20),
+                child: SvgPicture.asset(
+                  iconPath,
+                  width: 24,
+                  height: 24,
+                  fit: BoxFit.contain,
                 ),
               ),
             ),

@@ -48,6 +48,9 @@ dependencies:
   
   # SVG support for logo
   flutter_svg: ^2.0.9
+  
+  # Google Fonts
+  google_fonts: ^6.2.0
 
 dev_dependencies:
   flutter_test:
@@ -99,6 +102,46 @@ flutter:
     - assets/healthy.svg
     - assets/lifestyle.svg
     - assets/gainmuscle.svg
+    - assets/edit.svg
+    - assets/svg/logo.svg
+    - assets/svg/text.svg
+    - assets/svg/login.svg
+    - assets/svg/language.svg
+    - assets/svg/password.svg
+    - assets/svg/signup.svg
+    - assets/svg/number.svg
+    - assets/svg/Home.svg
+    - assets/svg/doctor.svg
+    - assets/svg/plans.svg
+    - assets/svg/calender.svg
+    - assets/svg/account.svg
+    - assets/svg/deleteacc.svg
+    - assets/svg/myplan.svg
+    - assets/svg/myaddress.svg
+    - assets/svg/noaddress.svg
+    - assets/svg/nomeal.svg
+    - assets/svg/noactiveplan.svg
+    - assets/svg/nofav.svg
+    - assets/svg/nopromo.svg
+    - assets/svg/fav.svg
+    - assets/svg/languagesmall.svg
+    - assets/svg/aboutapp.svg
+    - assets/svg/help.svg
+    - assets/svg/instagram.svg
+    - assets/svg/tiktok.svg
+    - assets/svg/snap.svg
+    - assets/svg/call.svg
+    - assets/svg/whatsapp.svg
+    - assets/svg/callora.svg
+    - assets/svg/whatsappora.svg
+    - assets/svg/choose.svg
+    - assets/svg/meal.svg
+    - assets/svg/pause.svg
+    - assets/svg/preparing.svg
+    - assets/svg/mealdel.svg
+    - assets/svg/Rectanglecal.svg
+    - assets/svg/english.svg
+    - assets/svg/arabic.svg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

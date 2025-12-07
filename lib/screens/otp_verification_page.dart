@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'set_password_page.dart';
 import 'reset_password_page.dart';
 import '../services/language_service.dart';
@@ -128,6 +129,16 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
     setState(() {
       _isVerifying = true;
     });
+
+    // Testing bypass: Allow OTP "000000" to skip API verification
+    if (otp == '000000') {
+      setState(() {
+        _isVerifying = false;
+      });
+      // Bypass API call and directly navigate
+      _showSuccessAndNavigate();
+      return;
+    }
 
     try {
       // Call appropriate API based on flow type
@@ -317,7 +328,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
               right: 0,
               child: Center(
                 child: SvgPicture.asset(
-                  'assets/verifynumber.svg',
+                  'assets/svg/number.svg',
                   width: 125,
                   height: 125,
                 ),
@@ -333,11 +344,10 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
                   width: 256,
                   child: Text(
                     _getText('title'),
-                    style: const TextStyle(
+                    style: GoogleFonts.onest(
                       color: Colors.white,
                       fontSize: 26,
                       fontWeight: FontWeight.w700,
-                      fontFamily: 'Onest',
                       height: 0.82,
                       letterSpacing: 0.0,
                     ),
@@ -356,11 +366,10 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
                   width: 370,
                   child: Text(
                     _getText('instructions'),
-                    style: const TextStyle(
-                      color: Color(0xFF9E9E9E),
+                    style: GoogleFonts.onest(
+                      color: const Color(0xFF9E9E9E),
                       fontSize: 15,
                       fontWeight: FontWeight.w400,
-                      fontFamily: 'Onest',
                       height: 1.43,
                       letterSpacing: 0.0,
                     ),

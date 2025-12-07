@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'signup_page.dart';
-import 'home_page.dart';
+import 'main_page.dart';
 import 'forgot_password_page.dart';
 import '../services/language_service.dart';
 import '../services/auth_service.dart';
@@ -91,15 +92,15 @@ class _LoginPageState extends State<LoginPage> {
   }
   
   // Country code options
-  final List<Map<String, String>> _countries = [
-    {'code': '+965', 'flag': '🇰🇼', 'name': 'Kuwait'},
-    {'code': '+91', 'flag': '🇮🇳', 'name': 'India'},
-    {'code': '+1', 'flag': '🇺🇸', 'name': 'USA'},
-    {'code': '+971', 'flag': '🇦🇪', 'name': 'UAE'},
-    {'code': '+966', 'flag': '🇸🇦', 'name': 'Saudi Arabia'},
+  final List<Map<String, dynamic>> _countries = [
+    {'code': '+965', 'icon': 'assets/svg/arabic.svg', 'name': 'Kuwait'},
+    {'code': '+91', 'icon': 'assets/svg/english.svg', 'name': 'India'},
+    {'code': '+1', 'icon': 'assets/svg/english.svg', 'name': 'USA'},
+    {'code': '+971', 'icon': 'assets/svg/arabic.svg', 'name': 'UAE'},
+    {'code': '+966', 'icon': 'assets/svg/arabic.svg', 'name': 'Saudi Arabia'},
   ];
   
-  Map<String, String> _selectedCountry = {'code': '+965', 'flag': '🇰🇼', 'name': 'Kuwait'};
+  Map<String, dynamic> _selectedCountry = {'code': '+965', 'icon': 'assets/svg/arabic.svg', 'name': 'Kuwait'};
 
   Future<void> _handleLogin() async {
     // Validate inputs - API only requires phone and password
@@ -155,7 +156,7 @@ class _LoginPageState extends State<LoginPage> {
         // Login successful, navigate to home page
         if (mounted) {
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const HomePage()),
+            MaterialPageRoute(builder: (context) => const MainPage()),
           );
         }
       } else {
@@ -192,28 +193,49 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final statusBarHeight = MediaQuery.of(context).padding.top;
+    
     return Scaffold(
       backgroundColor: const Color(0xFF1A1A1A),
+      resizeToAvoidBottomInset: false,
       body: Column(
+        mainAxisSize: MainAxisSize.max,
         children: [
           // Top Banner Section
           Expanded(
             flex: 2,
             child: Stack(
+              clipBehavior: Clip.none,
               children: [
-                // Banner Image
-                Positioned.fill(
-                  child: Image.asset(
-                    'assets/Group 104.png',
-                    fit: BoxFit.fill,
-                    errorBuilder: (BuildContext context, Object error, StackTrace? stackTrace) {
-                      return Container(
-                        color: const Color(0xFF1B1B1B),
-                        child: const Center(
-                          child: Icon(Icons.error, color: Colors.red),
-                        ),
-                      );
-                    },
+                // Banner Image - starts from absolute top (including status bar area)
+                // SVG dimensions: width 402, height 298
+                Positioned(
+                  top: -statusBarHeight,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: SizedBox(
+                    width: screenWidth,
+                    height: 298, // Fixed height as per SVG dimensions
+                    child: SvgPicture.asset(
+                      'assets/svg/login.svg',
+                      width: screenWidth,
+                      height: 298,
+                      fit: BoxFit.fill,
+                      alignment: Alignment.topCenter,
+                      placeholderBuilder: (BuildContext context) {
+                        return Container(
+                          color: const Color(0xFF1B1B1B),
+                          child: const Center(
+                            child: CircularProgressIndicator(
+                              color: Color(0xFFFF6B35),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ),
                 // Overlay Content (transparent to show SVG)
@@ -222,7 +244,7 @@ class _LoginPageState extends State<LoginPage> {
                   height: double.infinity,
                   child: SafeArea(
                     child: Padding(
-                      padding: const EdgeInsets.all(24.0),
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
                       child: Column(
                         crossAxisAlignment: _isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                         children: [
@@ -231,7 +253,7 @@ class _LoginPageState extends State<LoginPage> {
                             alignment: _isRTL ? Alignment.topRight : Alignment.topLeft,
                             child: Padding(
                               padding: EdgeInsets.only(
-                                top: 20,
+                                top: 0,
                                 right: _isRTL ? 0 : 0,
                                 left: _isRTL ? 0 : 0,
                               ),
@@ -242,7 +264,7 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                             ),
                           ),
-                          const Spacer(),
+                          const SizedBox(height: 8),
                           // Text Overlay
                           Align(
                             alignment: _isRTL ? Alignment.centerRight : Alignment.centerLeft,
@@ -253,29 +275,27 @@ class _LoginPageState extends State<LoginPage> {
                                   width: 280,
                                   child: Text(
                                     _getText('headerTitle'),
-                                    style: const TextStyle(
+                                    style: GoogleFonts.onest(
                                       color: Colors.white,
                                       fontSize: 21.98,
                                       fontWeight: FontWeight.w700,
                                       height: 0.98,
                                       letterSpacing: -0.54,
-                                      fontFamily: 'Onest',
                                     ),
                                     textAlign: _isRTL ? TextAlign.right : TextAlign.left,
                                   ),
                                 ),
-                                const SizedBox(height: 16),
+                                const SizedBox(height: 8),
                                 SizedBox(
                                   width: 347,
                                   child: Text(
                                     _getText('headerSubtitle'),
-                                    style: const TextStyle(
+                                    style: GoogleFonts.onest(
                                       color: Colors.white,
                                       fontSize: 11.31,
                                       fontWeight: FontWeight.w500,
                                       height: 1.67,
                                       letterSpacing: 0.0,
-                                      fontFamily: 'Onest',
                                     ),
                                     textAlign: _isRTL ? TextAlign.right : TextAlign.left,
                                   ),
@@ -283,7 +303,7 @@ class _LoginPageState extends State<LoginPage> {
                               ],
                             ),
                           ),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 16),
                         ],
                       ),
                     ),
@@ -305,28 +325,34 @@ class _LoginPageState extends State<LoginPage> {
           ),
           // Login Form Section
           Expanded(
-            flex: 3,
+            flex: 4,
             child: Container(
               width: double.infinity,
               color: const Color(0xFF1A1A1A),
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+              child: Stack(
+                children: [
+                  SingleChildScrollView(
+                    padding: EdgeInsets.only(
+                      left: 24.0,
+                      right: 24.0,
+                      top: 24.0,
+                      bottom: 24.0 + MediaQuery.of(context).viewInsets.bottom,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                     // Title
                     Center(
                       child: SizedBox(
                         width: 256,
                         child: Text(
                           _getText('title'),
-                          style: const TextStyle(
+                          style: GoogleFonts.onest(
                             color: Colors.white,
                             fontSize: 26,
                             fontWeight: FontWeight.w700,
                             height: 0.82,
                             letterSpacing: 0.0,
-                            fontFamily: 'Onest',
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -339,13 +365,12 @@ class _LoginPageState extends State<LoginPage> {
                         width: 319,
                         child: Text(
                           _getText('subtitle'),
-                          style: const TextStyle(
-                            color: Color(0xFF9E9E9E),
+                          style: GoogleFonts.onest(
+                            color: const Color(0xFF9E9E9E),
                             fontSize: 15,
                             fontWeight: FontWeight.w400,
                             height: 1.43,
                             letterSpacing: 0.0,
-                            fontFamily: 'Onest',
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -379,9 +404,11 @@ class _LoginPageState extends State<LoginPage> {
                                       ),
                                     ),
                                     ..._countries.map((country) => ListTile(
-                                      leading: Text(
-                                        country['flag']!,
-                                        style: const TextStyle(fontSize: 24),
+                                      leading: SvgPicture.asset(
+                                        country['icon']!,
+                                        width: 24,
+                                        height: 24,
+                                        fit: BoxFit.contain,
                                       ),
                                       title: Text(
                                         country['name']!,
@@ -417,7 +444,12 @@ class _LoginPageState extends State<LoginPage> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Text(_selectedCountry['flag']!, style: const TextStyle(fontSize: 20)),
+                                SvgPicture.asset(
+                                  _selectedCountry['icon']!,
+                                  width: 24,
+                                  height: 24,
+                                  fit: BoxFit.contain,
+                                ),
                                 const SizedBox(width: 8),
                                 Text(
                                   _selectedCountry['code']!,
@@ -481,9 +513,11 @@ class _LoginPageState extends State<LoginPage> {
                                       ),
                                     ),
                                     ..._countries.map((country) => ListTile(
-                                      leading: Text(
-                                        country['flag']!,
-                                        style: const TextStyle(fontSize: 24),
+                                      leading: SvgPicture.asset(
+                                        country['icon']!,
+                                        width: 24,
+                                        height: 24,
+                                        fit: BoxFit.contain,
                                       ),
                                       title: Text(
                                         country['name']!,
@@ -519,7 +553,12 @@ class _LoginPageState extends State<LoginPage> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Text(_selectedCountry['flag']!, style: const TextStyle(fontSize: 20)),
+                                SvgPicture.asset(
+                                  _selectedCountry['icon']!,
+                                  width: 24,
+                                  height: 24,
+                                  fit: BoxFit.contain,
+                                ),
                                 const SizedBox(width: 8),
                                 Text(
                                   _selectedCountry['code']!,
@@ -557,29 +596,6 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                       ],
-                    ),
-                    const SizedBox(height: 20),
-                    // Email Input
-                    Container(
-                      height: 56,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF2A2A2A),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFF3A3A3A)),
-                      ),
-                      child: TextField(
-                        controller: _emailController,
-                        textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
-                        textAlign: _isRTL ? TextAlign.right : TextAlign.left,
-                        style: const TextStyle(color: Colors.white),
-                        keyboardType: TextInputType.emailAddress,
-                        decoration: InputDecoration(
-                          hintText: _getText('emailHint'),
-                          hintStyle: const TextStyle(color: Color(0xFF9E9E9E)),
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                        ),
-                      ),
                     ),
                     const SizedBox(height: 20),
                     // Password Input
@@ -643,9 +659,9 @@ class _LoginPageState extends State<LoginPage> {
                         height: 50,
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
-                            colors: [Color(0xFFFE8347), Color(0xFFA43B08)],
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
+                            colors: [Color(0xFFFF722D), Color(0xFFB34712)],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
                           ),
                           borderRadius: BorderRadius.circular(25.13),
                         ),
@@ -709,39 +725,49 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                     ),
-                    const Spacer(),
-                    // Legal Text
-                    Center(
-                      child: RichText(
-                        textAlign: TextAlign.center,
-                        text: TextSpan(
-                          style: const TextStyle(
-                            color: Color(0xFF9E9E9E),
-                            fontSize: 12,
+                    const SizedBox(height: 100), // Extra space for legal text at bottom
+                  ],
+                ),
+              ),
+                  // Legal Text - Fixed at bottom
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: Container(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Center(
+                        child: RichText(
+                          textAlign: TextAlign.center,
+                          text: TextSpan(
+                            style: const TextStyle(
+                              color: Color(0xFF9E9E9E),
+                              fontSize: 12,
+                            ),
+                            children: [
+                              TextSpan(text: _getText('terms')),
+                              TextSpan(
+                                text: _getText('termsLink'),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                              TextSpan(text: ' | '),
+                              TextSpan(
+                                text: _getText('privacyLink'),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ],
                           ),
-                          children: [
-                            TextSpan(text: _getText('terms')),
-                            TextSpan(
-                              text: _getText('termsLink'),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                decoration: TextDecoration.underline,
-                              ),
-                            ),
-                            TextSpan(text: ' | '),
-                            TextSpan(
-                              text: _getText('privacyLink'),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                decoration: TextDecoration.underline,
-                              ),
-                            ),
-                          ],
                         ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),

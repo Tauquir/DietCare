@@ -2,9 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'checkout_page.dart';
 import '../services/language_service.dart';
+import '../services/subscription_service.dart';
+import '../services/auth_storage_service.dart';
+import '../services/user_service.dart';
 
 class SubscriptionPage extends StatefulWidget {
-  const SubscriptionPage({super.key});
+  final int? mealPlanId;
+  final String? mealPlanName;
+  final int? durationDays;
+  final double? totalAmount;
+
+  const SubscriptionPage({
+    super.key,
+    this.mealPlanId,
+    this.mealPlanName,
+    this.durationDays,
+    this.totalAmount,
+  });
 
   @override
   State<SubscriptionPage> createState() => _SubscriptionPageState();
@@ -13,6 +27,7 @@ class SubscriptionPage extends StatefulWidget {
 class _SubscriptionPageState extends State<SubscriptionPage> {
   final LanguageService _languageService = LanguageService();
   final _formKey = GlobalKey<FormState>();
+  bool _isLoading = false;
   final _nameController = TextEditingController(text: 'Ahmed Rashid');
   final _phoneController = TextEditingController(text: '88776644');
   final _cityController = TextEditingController(text: 'Kuwait City');
@@ -388,22 +403,32 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
             borderRadius: BorderRadius.circular(28),
           ),
           child: ElevatedButton(
-            onPressed: _handleSubscription,
+            onPressed: _isLoading ? null : _handleSubscription,
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.transparent,
               shadowColor: Colors.transparent,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(28),
               ),
+              disabledBackgroundColor: Colors.transparent,
             ),
-            child: Text(
-              _getText('next'),
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            child: _isLoading
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : Text(
+                    _getText('next'),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
           ),
         ),
       ),
@@ -510,12 +535,131 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
     );
   }
 
-  void _handleSubscription() {
-    // Navigate to checkout screen without validation
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const CheckoutPage(),
-      ),
-    );
+  Future<void> _handleSubscription() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    if (widget.mealPlanId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Meal plan information is missing'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Get token
+      final token = await AuthStorageService.getToken();
+      if (token == null || token.isEmpty) {
+        throw Exception('Please login to create subscription');
+      }
+
+      // First, create or get address
+      String? addressId;
+      try {
+        // Try to get existing addresses first
+        final addressesResponse = await UserService.getAddresses(token: token);
+        if (addressesResponse['success'] == true && addressesResponse['data'] != null) {
+          final addresses = addressesResponse['data']['addresses'] as List<dynamic>?;
+          if (addresses != null && addresses.isNotEmpty) {
+            // Use the first address or default address
+            final defaultAddress = addresses.firstWhere(
+              (addr) => (addr as Map<String, dynamic>)['isDefault'] == true,
+              orElse: () => addresses.first,
+            ) as Map<String, dynamic>;
+            addressId = defaultAddress['id']?.toString();
+          }
+        }
+      } catch (e) {
+        print('Error fetching addresses: $e');
+      }
+
+      // If no address found, create one
+      if (addressId == null) {
+        final addressResponse = await UserService.addAddress(
+          token: token,
+          type: 'home',
+          street: _streetController.text.trim().isNotEmpty 
+              ? _streetController.text.trim() 
+              : '${_blockController.text.trim()} ${_streetController.text.trim()}',
+          city: _cityController.text.trim(),
+          state: 'Kuwait', // Default state
+          zipCode: '00000', // Default zip
+          country: 'Kuwait',
+          isDefault: true,
+          fullName: _nameController.text.trim(),
+          phone: _phoneController.text.trim(),
+          building: _buildingController.text.trim().isNotEmpty ? _buildingController.text.trim() : null,
+          floor: _floorController.text.trim().isNotEmpty ? _floorController.text.trim() : null,
+          flat: _flatController.text.trim().isNotEmpty ? _flatController.text.trim() : null,
+        );
+
+        if (addressResponse['success'] == true && addressResponse['data'] != null) {
+          final addressData = addressResponse['data']['address'] as Map<String, dynamic>?;
+          addressId = addressData?['id']?.toString();
+        }
+      }
+
+      if (addressId == null) {
+        throw Exception('Failed to create or retrieve address');
+      }
+
+      // Calculate dates
+      final now = DateTime.now();
+      final startDate = now.toIso8601String().split('T')[0]; // Format: YYYY-MM-DD
+      final activePlanStartDate = now.add(const Duration(days: 4)).toIso8601String().split('T')[0]; // 4 days from now
+
+      // Create subscription
+      final response = await SubscriptionService.createSubscription(
+        mealPlanId: widget.mealPlanId!,
+        durationDays: widget.durationDays ?? 30,
+        startDate: startDate,
+        activePlanStartDate: activePlanStartDate,
+        totalAmount: widget.totalAmount ?? 0.0,
+        addressId: addressId,
+        specialInstructions: _instructionsController.text.trim().isNotEmpty 
+            ? _instructionsController.text.trim() 
+            : null,
+        token: token,
+      );
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      if (response['success'] == true) {
+        if (mounted) {
+          Navigator.of(context).pop(true); // Return true to indicate success
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Subscription created successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } else {
+        throw Exception(response['message'] ?? 'Failed to create subscription');
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceFirst('Exception: ', '')),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'otp_verification_page.dart';
 import '../services/language_service.dart';
 import '../services/auth_service.dart';
@@ -168,7 +169,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
               const SizedBox(height: 20),
               // Icon
               SvgPicture.asset(
-                'assets/setpassword.svg',
+                'assets/svg/password.svg',
                 width: 80,
                 height: 80,
               ),
@@ -176,11 +177,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
               // Title
               Text(
                 _getText('title'),
-                style: const TextStyle(
+                style: GoogleFonts.onest(
                   color: Colors.white,
                   fontSize: 26,
                   fontWeight: FontWeight.w700,
-                  fontFamily: 'Onest',
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -188,11 +188,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
               // Subtitle
               Text(
                 _getText('subtitle'),
-                style: const TextStyle(
-                  color: Color(0xFF9E9E9E),
+                style: GoogleFonts.onest(
+                  color: const Color(0xFF9E9E9E),
                   fontSize: 15,
                   fontWeight: FontWeight.w400,
-                  fontFamily: 'Onest',
                 ),
                 textAlign: TextAlign.center,
               ),

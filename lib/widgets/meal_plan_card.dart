@@ -12,8 +12,11 @@ class MealPlanCard extends StatelessWidget {
   final String kcal; // e.g., "1000 - 1200"
   final List<String> mealComponents;
   final String price;
+  final int? mealPlanId;
+  final bool isFavorite;
   final VoidCallback? onViewMenu;
   final VoidCallback? onSubscribe;
+  final VoidCallback? onFavoriteToggle;
 
   const MealPlanCard({
     super.key,
@@ -25,8 +28,11 @@ class MealPlanCard extends StatelessWidget {
     required this.kcal,
     required this.mealComponents,
     required this.price,
+    this.mealPlanId,
+    this.isFavorite = false,
     this.onViewMenu,
     this.onSubscribe,
+    this.onFavoriteToggle,
   });
 
   // Translations
@@ -72,7 +78,7 @@ class MealPlanCard extends StatelessWidget {
       height: cardHeight,
       margin: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF212121), // Dark grey background matching image
+        color: const Color(0xFF1A1A1A), // Dark grey background matching image
         borderRadius: BorderRadius.circular(12.0),
       ),
       child: Column(
@@ -90,25 +96,47 @@ class MealPlanCard extends StatelessWidget {
             ),
             child: Stack(
               children: [
-                // Women image
+                // Meal plan banner image (from API or fallback)
                 ClipRRect(
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(borderRadiusTopLeft),
                     topRight: Radius.circular(borderRadiusTopRight),
                   ),
-                  child: Image.asset(
-                    'assets/women.png',
-                    width: imageWidth,
-                    height: imageHeight,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        width: imageWidth,
-                        height: imageHeight,
-                        color: const Color(0xFF3A3A3A),
-                      );
-                    },
-                  ),
+                  child: imageUrl != null && imageUrl!.isNotEmpty
+                      ? Image.network(
+                          imageUrl!,
+                          width: imageWidth,
+                          height: imageHeight,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Image.asset(
+                              'assets/women.png',
+                              width: imageWidth,
+                              height: imageHeight,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  width: imageWidth,
+                                  height: imageHeight,
+                                  color: const Color(0xFF3A3A3A),
+                                );
+                              },
+                            );
+                          },
+                        )
+                      : Image.asset(
+                          'assets/women.png',
+                          width: imageWidth,
+                          height: imageHeight,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              width: imageWidth,
+                              height: imageHeight,
+                              color: const Color(0xFF3A3A3A),
+                            );
+                          },
+                        ),
                 ),
                 // Gradient overlay for text readability
                 Positioned.fill(
@@ -125,6 +153,37 @@ class MealPlanCard extends StatelessWidget {
                           Colors.black.withOpacity(0.7),
                           Colors.transparent,
                         ],
+                      ),
+                    ),
+                  ),
+                ),
+                // Heart icon in top right
+                Positioned(
+                  top: 10,
+                  right: _isRTL ? null : 10,
+                  left: _isRTL ? 10 : null,
+                  child: GestureDetector(
+                    onTap: () {
+                      print('💖 Heart icon tapped in MealPlanCard');
+                      print('💖 onFavoriteToggle callback: ${onFavoriteToggle != null ? "exists" : "null"}');
+                      print('💖 isFavorite: $isFavorite');
+                      if (onFavoriteToggle != null) {
+                        onFavoriteToggle!();
+                      } else {
+                        print('⚠️ onFavoriteToggle is null!');
+                      }
+                    },
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.5),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        isFavorite ? Icons.favorite : Icons.favorite_border,
+                        color: isFavorite ? Colors.red : Colors.white,
+                        size: 20,
                       ),
                     ),
                   ),
@@ -180,7 +239,13 @@ class MealPlanCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _buildNutritionItem(_getText('protein'), protein),
-                          const SizedBox(width: 16),
+                          // Vertical separator
+                          Container(
+                            width: 1,
+                            height: 20,
+                            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                            color: const Color(0xFF3A3A3A),
+                          ),
                           _buildNutritionItem(_getText('carbs'), carbs),
                           const SizedBox(width: 16),
                           // Kcal in a distinct box with more padding
@@ -234,7 +299,7 @@ class MealPlanCard extends StatelessWidget {
                             Text(
                               _getText('includes'),
                               style: const TextStyle(
-                                color: Color(0xFF9E9E9E),
+                                color: Colors.white,
                                 fontSize: 10,
                                 fontWeight: FontWeight.w500,
                               ),

@@ -1,4 +1,4 @@
-import 'package:dietcare/screens/home_page.dart';
+import 'package:dietcare/screens/main_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'screens/splash_screen.dart';
@@ -57,7 +57,7 @@ class _MyAppState extends State<MyApp> {
           child: child!,
         );
       },
-      home: const HomePage(),
+      home: const SplashScreen(),
     );
   }
 }

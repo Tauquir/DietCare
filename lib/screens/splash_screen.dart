@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'language_selection_page.dart';
+import 'main_page.dart';
+import '../services/auth_storage_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -13,71 +15,65 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    // Navigate to language selection page after 3 seconds
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) {
+    _checkAuthenticationAndNavigate();
+  }
+
+  Future<void> _checkAuthenticationAndNavigate() async {
+    // Wait for splash screen display (3 seconds)
+    await Future.delayed(const Duration(seconds: 3));
+    
+    if (!mounted) return;
+    
+    // Check if user is authenticated
+    final isAuthenticated = await AuthStorageService.isAuthenticated();
+    
+    if (mounted) {
+      if (isAuthenticated) {
+        // User is logged in, navigate to main page
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const MainPage()),
+        );
+      } else {
+        // User is not logged in, navigate to language selection page
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const LanguageSelectionPage()),
         );
       }
-    });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
+    final screenWidth = screenSize.width;
+    final screenHeight = screenSize.height;
+    
+    // Calculate responsive sizes based on screen width
+    final logoSize = screenWidth * 0.4; // 40% of screen width
+    final textWidth = screenWidth * 0.6; // 60% of screen width
+    final textHeight = (textWidth * 39) / 218; // Maintain aspect ratio
+    
     return Scaffold(
-      body: Container(
-        width: 640,
-        height: 1382,
-        decoration: const BoxDecoration(
-          color: Color(0xFF1B1B1B), // #1B1B1B
-        ),
-        child: Stack(
+      backgroundColor: const Color(0xFF1A1A1A), // Primary dark background from color palette
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Logo positioned at specific coordinates
-            Positioned(
-              top: 332,
-              left: 119.53,
-              child: Opacity(
-                opacity: 1,
-                child: Container(
-                  width: 161.48046875,
-                  height: 162.58837890625,
-                  decoration: BoxDecoration(
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFFFF5504).withOpacity(0.0),
-                        blurRadius: 25.13,
-                        spreadRadius: 0.63,
-                        offset: const Offset(0, 0),
-                      ),
-                    ],
-                  ),
-                  child: SvgPicture.asset(
-                    'assets/newlogo.svg',
-                    width: 161.48046875,
-                    height: 162.58837890625,
-                  ),
-                ),
-              ),
+            // Logo
+            SvgPicture.asset(
+              'assets/svg/logo.svg',
+              width: logoSize,
+              height: logoSize,
+              fit: BoxFit.contain,
             ),
-            // Text "soaraat" - will need positioning attributes
-            const Positioned(
-              top: 520, // Approximate position below logo, adjust as needed
-              left: 0,
-              right: 0,
-              child: Center(
-                child: Text(
-                  'soaraat',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 52,
-                    fontWeight: FontWeight.bold,
-                    height: 1.0, // Exact line height to match letter height
-                    letterSpacing: 0.0,
-                  ),
-                ),
-              ),
+            // Spacing between logo and text
+            SizedBox(height: screenHeight * 0.04), // 4% of screen height
+            // Text SVG
+            SvgPicture.asset(
+              'assets/svg/text.svg',
+              width: textWidth,
+              height: textHeight,
+              fit: BoxFit.contain,
             ),
           ],
         ),

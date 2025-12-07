@@ -8,7 +8,7 @@
 PRODUCT_NAME = dietcare
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.dietcare.app.dietcare
+PRODUCT_BUNDLE_IDENTIFIER = com.dietcare.app
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2025 com.dietcare.app. All rights reserved.

@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import '../screens/calendar_page.dart';
-import '../screens/account_page.dart';
-import '../screens/home_page.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class CustomBottomNavigationBar extends StatefulWidget {
   final int initialIndex;
@@ -26,98 +24,58 @@ class _CustomBottomNavigationBarState extends State<CustomBottomNavigationBar> {
     _selectedIndex = widget.initialIndex;
   }
 
+  @override
+  void didUpdateWidget(CustomBottomNavigationBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialIndex != widget.initialIndex) {
+      setState(() {
+        _selectedIndex = widget.initialIndex;
+      });
+    }
+  }
+
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
 
+    // Always call the callback if provided
     if (widget.onItemTapped != null) {
       widget.onItemTapped!(index);
-    } else {
-      // Default navigation behavior
-      if (index == 0) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (context) => const HomePage(),
-          ),
-        );
-      } else if (index == 1) {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => const CalendarPage(),
-          ),
-        );
-      } else if (index == 2) {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => const AccountPage(),
-          ),
-        );
-      }
     }
   }
 
-  Widget _buildBottomNavItem(IconData icon, String label, int index) {
+  Widget _buildBottomNavItem(String label, int index) {
     final isSelected = _selectedIndex == index;
     
-    // Custom icon for PLANS - document with apple
-    Widget iconWidget;
+    // Get the appropriate SVG asset based on label
+    String svgAsset;
     if (label == 'PLANS') {
-      iconWidget = Stack(
-        alignment: Alignment.center,
-        children: [
-          // Document icon
-          Icon(
-            Icons.description,
-            color: isSelected ? const Color(0xFFFF6B35) : const Color(0xFF9E9E9E),
-            size: 24,
-          ),
-          // Apple icon positioned on top-right of document
-          Positioned(
-            top: -2,
-            right: -4,
-            child: Container(
-              width: 14,
-              height: 14,
-              decoration: BoxDecoration(
-                color: isSelected ? const Color(0xFFFF6B35) : const Color(0xFF9E9E9E),
-                shape: BoxShape.circle,
-              ),
-              child: Stack(
-                children: [
-                  // Apple body
-                  Container(
-                    decoration: BoxDecoration(
-                      color: isSelected ? const Color(0xFFFF6B35) : const Color(0xFF9E9E9E),
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  // Leaf
-                  Positioned(
-                    top: -2,
-                    left: 2,
-                    child: Container(
-                      width: 4,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: Colors.green,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      );
+      svgAsset = 'assets/svg/plans.svg';
+    } else if (label == 'CALENDAR') {
+      svgAsset = 'assets/svg/calender.svg';
+    } else if (label == 'ACCOUNT') {
+      svgAsset = 'assets/svg/account.svg';
     } else {
-      iconWidget = Icon(
-        icon,
-        color: isSelected ? const Color(0xFFFF6B35) : const Color(0xFF9E9E9E),
-        size: 24,
-      );
+      svgAsset = 'assets/svg/plans.svg'; // Default fallback
     }
+    
+    Widget iconWidget = isSelected
+        ? SvgPicture.asset(
+            svgAsset,
+            width: 24,
+            height: 24,
+            // No color filter when selected - show original SVG colors
+          )
+        : SvgPicture.asset(
+      svgAsset,
+      width: 24,
+      height: 24,
+            colorFilter: const ColorFilter.mode(
+              Color(0xFF9E9E9E),
+        BlendMode.srcIn,
+      ),
+    );
     
     return GestureDetector(
       onTap: () => _onItemTapped(index),
@@ -150,9 +108,9 @@ class _CustomBottomNavigationBarState extends State<CustomBottomNavigationBar> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _buildBottomNavItem(Icons.assignment_outlined, 'PLANS', 0),
-          _buildBottomNavItem(Icons.event, 'CALENDAR', 1),
-          _buildBottomNavItem(Icons.person_outline, 'ACCOUNT', 2),
+          _buildBottomNavItem('PLANS', 0),
+          _buildBottomNavItem('CALENDAR', 1),
+          _buildBottomNavItem('ACCOUNT', 2),
         ],
       ),
     );

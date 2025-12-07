@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import '../services/language_service.dart';
 import '../services/user_service.dart';
 import '../services/auth_storage_service.dart';
+import '../widgets/empty_address_widget.dart';
 import 'location_selection_page.dart';
+import 'add_address_page.dart';
 
 class AddressPage extends StatefulWidget {
   const AddressPage({super.key});
@@ -55,8 +57,10 @@ class _AddressPageState extends State<AddressPage> {
       'other': 'Other',
       'savedAddresses': 'Saved Addresses',
       'noAddresses': 'No addresses saved yet',
+      'noAddressAddedYet': 'No Address Added Yet!',
+      'addFirstAddressSubtitle': 'Add your first address to make ordering faster and easier.',
       'default': 'Default',
-      'addNewAddress': 'Add New Address',
+      'addNewAddress': 'ADD NEW ADDRESS',
     },
     'Arabic': {
       'myAddress': 'عنواني',
@@ -83,6 +87,8 @@ class _AddressPageState extends State<AddressPage> {
       'other': 'أخرى',
       'savedAddresses': 'العناوين المحفوظة',
       'noAddresses': 'لا توجد عناوين محفوظة بعد',
+      'noAddressAddedYet': 'لم يتم إضافة عنوان بعد!',
+      'addFirstAddressSubtitle': 'أضف عنوانك الأول لجعل الطلب أسرع وأسهل.',
       'default': 'افتراضي',
       'addNewAddress': 'إضافة عنوان جديد',
     },
@@ -278,8 +284,32 @@ class _AddressPageState extends State<AddressPage> {
   }
 
   Widget _buildAddressCard(Map<String, dynamic> address) {
-    final type = address['type'] as String? ?? 'other';
-    final isDefault = address['isDefault'] == true;
+    // Get address fields - check for fullName or addressName, fallback to type
+    final name = address['fullName']?.toString() ?? 
+                 address['addressName']?.toString() ?? 
+                 _getAddressTypeLabel(address['type']?.toString() ?? 'home');
+    final street = address['street']?.toString() ?? '';
+    final city = address['city']?.toString() ?? '';
+    final state = address['state']?.toString() ?? '';
+    final zipCode = address['zipCode']?.toString() ?? '';
+    final country = address['country']?.toString() ?? '';
+    
+    // Format address lines as shown in the image
+    // Line 1: street address (e.g., "Block 3, Street 18 House 12 Salmiya Area")
+    // Line 2: zipCode state, country (e.g., "22014 Hawali, Kuwait")
+    final addressLine1 = street;
+    // Use state if available, otherwise use city
+    final location = state.isNotEmpty ? state : city;
+    final addressLine2Parts = <String>[];
+    if (zipCode.isNotEmpty) addressLine2Parts.add(zipCode);
+    if (location.isNotEmpty && country.isNotEmpty) {
+      addressLine2Parts.add('$location, $country');
+    } else if (location.isNotEmpty) {
+      addressLine2Parts.add(location);
+    } else if (country.isNotEmpty) {
+      addressLine2Parts.add(country);
+    }
+    final addressLine2 = addressLine2Parts.join(' ');
     
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -287,81 +317,90 @@ class _AddressPageState extends State<AddressPage> {
       decoration: BoxDecoration(
         color: const Color(0xFF2A2A2A),
         borderRadius: BorderRadius.circular(12),
-        border: isDefault
-            ? Border.all(color: const Color(0xFFFF6B35), width: 2)
-            : null,
       ),
-      child: Column(
+      child: Row(
+        textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
-            children: [
-              Row(
-                textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
-                children: [
-                  Icon(
-                    type == 'home' ? Icons.home : (type == 'work' ? Icons.work : Icons.location_on),
-                    color: const Color(0xFFFF6B35),
-                    size: 20,
+          // House icon on the left
+          const Icon(
+            Icons.home_outlined,
+            color: Colors.white,
+            size: 24,
+          ),
+          const SizedBox(width: 12),
+          // Address details in the middle
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
+              children: [
+                // Name
+                Text(
+                  name,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
                   ),
-                  const SizedBox(width: 8),
+                  textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
+                ),
+                const SizedBox(height: 8),
+                // Address line 1
+                if (addressLine1.isNotEmpty)
                   Text(
-                    _getAddressTypeLabel(type),
+                    addressLine1,
                     style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF9E9E9E),
+                      fontSize: 14,
                     ),
                     textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
                   ),
-                ],
-              ),
-              if (isDefault)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFF6B35),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    _getText('default'),
+                if (addressLine1.isNotEmpty && addressLine2.isNotEmpty)
+                  const SizedBox(height: 4),
+                // Address line 2
+                if (addressLine2.isNotEmpty)
+                  Text(
+                    addressLine2,
                     style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF9E9E9E),
+                      fontSize: 14,
                     ),
+                    textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
                   ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Edit and Delete icons on the right
+          Column(
+            children: [
+              // Edit icon
+              GestureDetector(
+                onTap: () {
+                  // TODO: Navigate to edit address page
+                  print('Edit address: ${address['id']}');
+                },
+                child: const Icon(
+                  Icons.edit_outlined,
+                  color: Colors.white,
+                  size: 24,
                 ),
+              ),
+              const SizedBox(height: 16),
+              // Delete icon
+              GestureDetector(
+                onTap: () {
+                  // TODO: Show delete confirmation and delete address
+                  print('Delete address: ${address['id']}');
+                },
+                child: const Icon(
+                  Icons.delete_outline,
+                  color: Colors.red,
+                  size: 24,
+                ),
+              ),
             ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            address['street'] as String? ?? '',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 14,
-            ),
-            textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            '${address['city'] ?? ''}, ${address['state'] ?? ''}',
-            style: const TextStyle(
-              color: Color(0xFF9E9E9E),
-              fontSize: 14,
-            ),
-            textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            '${address['country'] ?? ''} ${address['zipCode'] ?? ''}',
-            style: const TextStyle(
-              color: Color(0xFF9E9E9E),
-              fontSize: 14,
-            ),
-            textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
           ),
         ],
       ),
@@ -372,395 +411,433 @@ class _AddressPageState extends State<AddressPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF1A1A1A),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF1A1A1A),
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            _isRTL ? Icons.arrow_forward_ios : Icons.arrow_back_ios,
-            color: Colors.white,
+      body: Column(
+        children: [
+          // Custom Header (same as Help Center)
+          Container(
+            width: double.infinity,
+            height: 140,
+            decoration: BoxDecoration(
+              color: const Color(0xFF2B2A2A),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 6.31,
+                  spreadRadius: 0,
+                  offset: const Offset(0, 0.63),
+                ),
+              ],
+            ),
+            child: SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                child: Row(
+                  textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
+                  children: [
+                    IconButton(
+                      icon: Icon(
+                        _isRTL ? Icons.arrow_forward_ios : Icons.arrow_back_ios,
+                        color: Colors.white,
+                      ),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                    Expanded(
+                      child: Text(
+                        _getText('myAddress'),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 48), // Balance the back button width
+                  ],
+                ),
+              ),
+            ),
           ),
-          onPressed: () => Navigator.of(context).pop(),
+          // Main Content
+          Expanded(
+            child: _isLoadingAddresses
+            ? const Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF6B35)),
+                ),
+              )
+            : _showAddForm
+                ? SingleChildScrollView(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 20),
+                        // Add Address Form content
+                        _buildAddAddressForm(),
+                      ],
+                    ),
+                  )
+                : _addresses.isEmpty
+                    ? Column(
+                        children: [
+                          Expanded(
+                            child: EmptyAddressWidget(
+                              title: _getText('noAddressAddedYet'),
+                              subtitle: _getText('addFirstAddressSubtitle'),
+                              isRTL: _isRTL,
+                            ),
+                          ),
+                          AddAddressButton(
+                            text: _getText('addNewAddress'),
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => const LocationSelectionPage(),
+                                ),
+                              ).then((_) {
+                                // Refresh addresses when returning from location selection flow
+                                _fetchAddresses();
+                              });
+                            },
+                            isRTL: _isRTL,
+                          ),
+                        ],
+                      )
+                    : Column(
+                        children: [
+                          // ADD NEW ADDRESS button at the top
+                          Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: AddAddressButton(
+                              text: _getText('addNewAddress'),
+                              onPressed: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => const AddAddressPage(),
+                                  ),
+                                ).then((_) {
+                                  // Refresh addresses when returning from AddAddressPage
+                                  _fetchAddresses();
+                                });
+                              },
+                              isRTL: _isRTL,
+                            ),
+                          ),
+                          // Address list
+                          Expanded(
+                            child: SingleChildScrollView(
+                              padding: const EdgeInsets.symmetric(horizontal: 20),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  ..._addresses.map((address) => _buildAddressCard(address)),
+                                  const SizedBox(height: 20),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+            ),
+
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAddAddressForm() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
+          children: [
+            Text(
+              _getText('addAddress'),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+              textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
+            ),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  _showAddForm = false;
+                  _clearForm();
+                });
+              },
+              child: Text(
+                _getText('cancel'),
+                style: const TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
         ),
-        title: Text(
-          _getText('myAddress'),
+        const SizedBox(height: 20),
+        
+        // Address Type Dropdown
+        Text(
+          _getText('type'),
           style: const TextStyle(
             color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+          textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF2A2A2A),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: DropdownButtonFormField<String>(
+            value: _selectedType,
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: const Color(0xFF2A2A2A),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            ),
+            dropdownColor: const Color(0xFF2A2A2A),
+            style: const TextStyle(color: Colors.white),
+            icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
+            items: _addressTypes.map((String type) {
+              return DropdownMenuItem<String>(
+                value: type,
+                child: Text(
+                  _getAddressTypeLabel(type),
+                  textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
+                ),
+              );
+            }).toList(),
+            onChanged: (String? newValue) {
+              if (newValue != null) {
+                setState(() {
+                  _selectedType = newValue;
+                });
+              }
+            },
           ),
         ),
-        centerTitle: true,
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 20),
-              
-              // Saved Addresses Section
-              if (!_showAddForm) ...[
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
-                  children: [
-                    Text(
-                      _getText('savedAddresses'),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
-                    ),
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => const LocationSelectionPage(),
-                          ),
-                        ).then((_) {
-                          // Refresh addresses when returning from location selection
-                          _fetchAddresses();
-                        });
-                      },
-                      icon: const Icon(Icons.add, size: 18),
-                      label: Text(_getText('addNewAddress')),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFF6B35),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                
-                // Addresses List
-                if (_isLoadingAddresses)
-                  const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(40.0),
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF6B35)),
-                      ),
-                    ),
-                  )
-                else if (_addresses.isEmpty)
-                  Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(40.0),
-                      child: Text(
-                        _getText('noAddresses'),
-                        style: const TextStyle(
-                          color: Color(0xFF9E9E9E),
-                          fontSize: 14,
-                        ),
-                        textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
-                      ),
-                    ),
-                  )
-                else
-                  ..._addresses.map((address) => _buildAddressCard(address)),
-              ],
-              
-              // Add Address Form
-              if (_showAddForm) ...[
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
-                  children: [
-                    Text(
-                      _getText('addAddress'),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        setState(() {
-                          _showAddForm = false;
-                          _clearForm();
-                        });
-                      },
-                      child: Text(
-                        _getText('cancel'),
-                        style: const TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                
-                // Address Type Dropdown
-              Text(
-                _getText('type'),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-                textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
-              ),
-              const SizedBox(height: 8),
-              Container(
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2A2A2A),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: DropdownButtonFormField<String>(
-                  value: _selectedType,
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: const Color(0xFF2A2A2A),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                  ),
-                  dropdownColor: const Color(0xFF2A2A2A),
-                  style: const TextStyle(color: Colors.white),
-                  icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
-                  items: _addressTypes.map((String type) {
-                    return DropdownMenuItem<String>(
-                      value: type,
-                      child: Text(
-                        _getAddressTypeLabel(type),
-                        textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
-                      ),
-                    );
-                  }).toList(),
-                  onChanged: (String? newValue) {
-                    if (newValue != null) {
-                      setState(() {
-                        _selectedType = newValue;
-                      });
-                    }
-                  },
-                ),
-              ),
-              const SizedBox(height: 24),
+        const SizedBox(height: 24),
 
-              // Street Address Field
-              Text(
-                _getText('street'),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-                textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _streetController,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: const Color(0xFF2A2A2A),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  hintText: '123 Main St',
-                  hintStyle: const TextStyle(color: Color(0xFF9E9E9E)),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                ),
-                textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
-              ),
-              const SizedBox(height: 24),
-
-              // City Field
-              Text(
-                _getText('city'),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-                textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _cityController,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: const Color(0xFF2A2A2A),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  hintText: 'Kuwait City',
-                  hintStyle: const TextStyle(color: Color(0xFF9E9E9E)),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                ),
-                textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
-              ),
-              const SizedBox(height: 24),
-
-              // State Field
-              Text(
-                _getText('state'),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-                textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _stateController,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: const Color(0xFF2A2A2A),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  hintText: 'Al Asimah',
-                  hintStyle: const TextStyle(color: Color(0xFF9E9E9E)),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                ),
-                textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
-              ),
-              const SizedBox(height: 24),
-
-              // Zip Code Field
-              Text(
-                _getText('zipCode'),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-                textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _zipCodeController,
-                keyboardType: TextInputType.number,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: const Color(0xFF2A2A2A),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  hintText: '12345',
-                  hintStyle: const TextStyle(color: Color(0xFF9E9E9E)),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                ),
-                textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
-              ),
-              const SizedBox(height: 24),
-
-              // Country Field
-              Text(
-                _getText('country'),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-                textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _countryController,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: const Color(0xFF2A2A2A),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  hintText: 'Kuwait',
-                  hintStyle: const TextStyle(color: Color(0xFF9E9E9E)),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                ),
-                textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
-              ),
-              const SizedBox(height: 24),
-
-              // Default Address Checkbox
-              Row(
-                textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
-                children: [
-                  Checkbox(
-                    value: _isDefault,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        _isDefault = value ?? false;
-                      });
-                    },
-                    activeColor: const Color(0xFFFF6B35),
-                    checkColor: Colors.white,
-                  ),
-                  Expanded(
-                    child: Text(
-                      _getText('isDefault'),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                      ),
-                      textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 40),
-
-              // Save Button
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _saveAddress,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFF6B35),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    disabledBackgroundColor: const Color(0xFF3A3A3A),
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                          ),
-                        )
-                      : Text(
-                          _getText('save'),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                ),
-              ),
-              const SizedBox(height: 20),
-            ],
-          ]),
+        // Street Address Field
+        Text(
+          _getText('street'),
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+          textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
         ),
-      ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _streetController,
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: const Color(0xFF2A2A2A),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            hintText: '123 Main St',
+            hintStyle: const TextStyle(color: Color(0xFF9E9E9E)),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          ),
+          textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
+        ),
+        const SizedBox(height: 24),
+
+        // City Field
+        Text(
+          _getText('city'),
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+          textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _cityController,
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: const Color(0xFF2A2A2A),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            hintText: 'Kuwait City',
+            hintStyle: const TextStyle(color: Color(0xFF9E9E9E)),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          ),
+          textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
+        ),
+        const SizedBox(height: 24),
+
+        // State Field
+        Text(
+          _getText('state'),
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+          textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _stateController,
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: const Color(0xFF2A2A2A),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            hintText: 'Al Asimah',
+            hintStyle: const TextStyle(color: Color(0xFF9E9E9E)),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          ),
+          textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
+        ),
+        const SizedBox(height: 24),
+
+        // Zip Code Field
+        Text(
+          _getText('zipCode'),
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+          textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _zipCodeController,
+          keyboardType: TextInputType.number,
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: const Color(0xFF2A2A2A),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            hintText: '12345',
+            hintStyle: const TextStyle(color: Color(0xFF9E9E9E)),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          ),
+          textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
+        ),
+        const SizedBox(height: 24),
+
+        // Country Field
+        Text(
+          _getText('country'),
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+          textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _countryController,
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: const Color(0xFF2A2A2A),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            hintText: 'Kuwait',
+            hintStyle: const TextStyle(color: Color(0xFF9E9E9E)),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          ),
+          textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
+        ),
+        const SizedBox(height: 24),
+
+        // Default Address Checkbox
+        Row(
+          textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
+          children: [
+            Checkbox(
+              value: _isDefault,
+              onChanged: (bool? value) {
+                setState(() {
+                  _isDefault = value ?? false;
+                });
+              },
+              activeColor: const Color(0xFFFF6B35),
+              checkColor: Colors.white,
+            ),
+            Expanded(
+              child: Text(
+                _getText('isDefault'),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                ),
+                textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 40),
+
+        // Save Button
+        SizedBox(
+          width: double.infinity,
+          height: 50,
+          child: ElevatedButton(
+            onPressed: _isLoading ? null : _saveAddress,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFF6B35),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              disabledBackgroundColor: const Color(0xFF3A3A3A),
+            ),
+            child: _isLoading
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : Text(
+                    _getText('save'),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+          ),
+        ),
+        const SizedBox(height: 20),
+      ],
     );
   }
 }

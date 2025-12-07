@@ -1,20 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'meal_selection_page.dart';
-import 'account_page.dart';
-import 'home_page.dart';
-import '../widgets/bottom_navigation_bar.dart';
 import '../services/language_service.dart';
+import '../services/subscription_service.dart';
+import '../services/auth_storage_service.dart';
 
 class CalendarPage extends StatefulWidget {
   const CalendarPage({super.key});
 
   @override
-  State<CalendarPage> createState() => _CalendarPageState();
+  CalendarPageState createState() => _CalendarPageState();
 }
 
-class _CalendarPageState extends State<CalendarPage> {
+abstract class CalendarPageState extends State<CalendarPage> {
+  void reloadCalendarData();
+}
+
+class _CalendarPageState extends CalendarPageState {
   final LanguageService _languageService = LanguageService();
-  DateTime _currentDate = DateTime(2025, 10, 15); // Start with October 2025
+  DateTime _currentDate = DateTime.now(); // Start with current date
+  bool _isLoading = false;
+  Map<String, String> _mealStatus = {}; // Will be populated from API
+  int? _activeMealPlanId; // Store active meal plan ID
 
   final List<String> _weekDaysEn = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
   final List<String> _weekDaysAr = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
@@ -66,6 +74,13 @@ class _CalendarPageState extends State<CalendarPage> {
   void initState() {
     super.initState();
     _languageService.addListener(_onLanguageChanged);
+    _loadCalendarData();
+  }
+
+  // Public method to reload calendar data when page becomes visible
+  @override
+  void reloadCalendarData() {
+    _loadCalendarData();
   }
 
   @override
@@ -78,24 +93,143 @@ class _CalendarPageState extends State<CalendarPage> {
     setState(() {});
   }
 
-  // Mock data for meal status - keyed by full date (year-month-day) with zero-padding
-  final Map<String, String> _mealStatus = {
-    '2025-10-08': 'selected',
-    '2025-10-09': 'selected',
-    '2025-10-10': 'selected',
-    '2025-10-11': 'selected',
-    '2025-10-12': 'selected',
-    '2025-10-13': 'preparing',
-    '2025-10-14': 'preparing',
-    '2025-10-15': 'preparing',
-    '2025-10-16': 'paused',
-    '2025-10-17': 'paused',
-    '2025-10-18': 'paused',
-    '2025-10-19': 'delivered',
-    '2025-10-20': 'delivered',
-    '2025-10-21': 'delivered',
-    '2025-10-22': 'choose',
-  };
+  // Get start and end dates of the current month
+  String _getMonthStartDate() {
+    final firstDay = DateTime(_currentDate.year, _currentDate.month, 1);
+    return '${firstDay.year}-${firstDay.month.toString().padLeft(2, '0')}-${firstDay.day.toString().padLeft(2, '0')}';
+  }
+
+  String _getMonthEndDate() {
+    final lastDay = DateTime(_currentDate.year, _currentDate.month + 1, 0);
+    return '${lastDay.year}-${lastDay.month.toString().padLeft(2, '0')}-${lastDay.day.toString().padLeft(2, '0')}';
+  }
+
+  // Load calendar data from API
+  Future<void> _loadCalendarData() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final token = await AuthStorageService.getToken();
+      if (token == null || token.isEmpty) {
+        setState(() {
+          _isLoading = false;
+          _mealStatus = {}; // Clear status if not logged in
+        });
+        return;
+      }
+
+      // Get user's active subscriptions
+      final subscriptionsResponse = await SubscriptionService.getMySubscriptions(token: token);
+      
+      if (subscriptionsResponse['success'] == true && subscriptionsResponse['data'] != null) {
+        final subscriptions = subscriptionsResponse['data']['subscriptions'] as List<dynamic>?;
+        
+        if (subscriptions != null && subscriptions.isNotEmpty) {
+          // Get the first active subscription
+          final activeSubscription = subscriptions.firstWhere(
+            (sub) => (sub as Map<String, dynamic>)['status'] == 'active' || 
+                     (sub as Map<String, dynamic>)['status'] == 'pending',
+            orElse: () => subscriptions.first,
+          ) as Map<String, dynamic>;
+          
+          final subscriptionId = activeSubscription['id']?.toString();
+          final mealPlanId = activeSubscription['mealPlanId'] as int?;
+          
+          if (subscriptionId != null && mealPlanId != null) {
+            // Store meal plan ID for navigation
+            setState(() {
+              _activeMealPlanId = mealPlanId;
+            });
+            
+            // Get start and end dates of current month
+            final startDate = _getMonthStartDate();
+            final endDate = _getMonthEndDate();
+            
+            // Fetch daily selection status
+            final response = await SubscriptionService.getDailySelectionStatus(
+              subscriptionId: subscriptionId,
+              mealPlanId: mealPlanId,
+              startDate: startDate,
+              endDate: endDate,
+              token: token,
+            );
+
+            if (response['success'] == true && response['data'] != null) {
+              final data = response['data'] as Map<String, dynamic>;
+              final statusList = data['status'] as List<dynamic>?;
+              
+              // Map API response to meal status
+              final Map<String, String> newStatusMap = {};
+              
+              if (statusList != null) {
+                for (var statusItem in statusList) {
+                  final status = statusItem as Map<String, dynamic>;
+                  final date = status['date']?.toString();
+                  
+                  if (date != null) {
+                    final isDelivered = status['is_delivered'] == 1 || status['is_delivered'] == true;
+                    final isPaused = status['is_paused'] == 1 || status['is_paused'] == true;
+                    final isSelected = status['is_selected'] == 1 || status['is_selected'] == true;
+                    final isEditable = status['is_editable'] == 1 || status['is_editable'] == true;
+                    
+                    // Determine status based on flags
+                    String mealStatus;
+                    if (isDelivered) {
+                      mealStatus = 'delivered';
+                    } else if (isPaused) {
+                      mealStatus = 'paused';
+                    } else if (isSelected && !isEditable) {
+                      // Selected but not editable means it's being prepared
+                      mealStatus = 'preparing';
+                    } else if (isSelected) {
+                      mealStatus = 'selected';
+                    } else {
+                      mealStatus = 'choose';
+                    }
+                    
+                    newStatusMap[date] = mealStatus;
+                  }
+                }
+              }
+              
+              setState(() {
+                _mealStatus = newStatusMap;
+                _isLoading = false;
+              });
+            } else {
+              setState(() {
+                _isLoading = false;
+                _mealStatus = {};
+              });
+            }
+          } else {
+            setState(() {
+              _isLoading = false;
+              _mealStatus = {};
+            });
+          }
+        } else {
+          setState(() {
+            _isLoading = false;
+            _mealStatus = {};
+          });
+        }
+      } else {
+        setState(() {
+          _isLoading = false;
+          _mealStatus = {};
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _mealStatus = {};
+      });
+      print('Error loading calendar data: $e');
+    }
+  }
 
   // Get the day of week for the first day of the month (0=Sunday, 6=Saturday)
   int _getFirstDayOfWeek() {
@@ -161,23 +295,29 @@ class _CalendarPageState extends State<CalendarPage> {
           _currentDate = DateTime(picked.year, picked.month, daysInMonth);
         }
       });
+      // Reload calendar data for the new month
+      _loadCalendarData();
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1A1A1A),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Orange Header
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.only(top: 40, bottom: 20, left: 20, right: 20),
-              decoration: const BoxDecoration(
-                color: Color(0xFFFF6B35),
-              ),
+      backgroundColor: const Color(0xFF1B1B1B),
+      body: Column(
+        children: [
+          // Orange Header - extends to top
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.only(
+              top: MediaQuery.of(context).padding.top + 20,
+              bottom: 12,
+              left: 16,
+              right: 20,
+            ),
+            decoration: const BoxDecoration(
+              color: Color(0xFFFF6B35),
+            ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
@@ -188,10 +328,12 @@ class _CalendarPageState extends State<CalendarPage> {
                     children: [
                       Text(
                         _getText('calendar'),
-                        style: const TextStyle(
-                          color: Color(0xFF9E9E9E),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
+                        style: GoogleFonts.onest(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          height: 27.07 / 14, // line-height: 27.07px / font-size: 14px
+                          letterSpacing: 0,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -201,19 +343,32 @@ class _CalendarPageState extends State<CalendarPage> {
                           mainAxisSize: MainAxisSize.min,
                           textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
                           children: [
-                            Text(
+                            ConstrainedBox(
+                              constraints: const BoxConstraints(
+                                minWidth: 174,
+                                maxWidth: 250,
+                              ),
+                              child: SizedBox(
+                                height: 28,
+                                child: Text(
                               _getMonthYear(),
-                              style: const TextStyle(
+                                  style: GoogleFonts.onest(
                                 color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
+                                    fontSize: 25,
+                                    fontWeight: FontWeight.w800,
+                                    height: 27.07 / 25, // line-height: 27.07px / font-size: 25px
+                                    letterSpacing: 0,
+                                  ),
+                                  textAlign: _isRTL ? TextAlign.right : TextAlign.left,
+                                  overflow: TextOverflow.visible,
+                                ),
                               ),
                             ),
                             const SizedBox(width: 8),
-                            const Icon(
+                            Icon(
                               Icons.keyboard_arrow_down,
                               color: Colors.white,
-                              size: 20,
+                              size: 30,
                             ),
                           ],
                         ),
@@ -296,42 +451,66 @@ class _CalendarPageState extends State<CalendarPage> {
             
             // Calendar Grid
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: Column(
-                  children: [
-                    // Week Days Header
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 16.0),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF2A2A2A),
-                      ),
-                      child: Row(
-                        textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
-                        children: _weekDays.map((day) {
-                          return Expanded(
-                            child: Center(
-                              child: Text(
-                                day,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                ),
+              child: Column(
+                children: [
+                  // Week Days Header - Full Screen Width
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.only(
+                      top: 12.0,
+                      bottom: 4.0,
+                      left: 20.0,
+                      right: 20.0,
+                    ),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF1B1B1B),
+                    ),
+                    child: Row(
+                      textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
+                      children: _weekDays.map((day) {
+                        return Expanded(
+                            child: Align(
+                              alignment: Alignment.topCenter,
+                              child: SizedBox(
+                                width: 40,
+                                height: 24,
+                            child: Text(
+                                  day.toUpperCase(),
+                                  style: GoogleFonts.onest(
+                                color: Colors.white,
+                                fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    height: 23.58 / 12, // line-height: 23.58px / font-size: 12px
+                                    letterSpacing: 0,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                  overflow: TextOverflow.visible,
+                                  textHeightBehavior: const TextHeightBehavior(
+                                    applyHeightToFirstAscent: false,
+                                    applyHeightToLastDescent: false,
+                                  ),
                               ),
                             ),
-                          );
-                        }).toList(),
-                      ),
+                          ),
+                        );
+                      }).toList(),
                     ),
-                    
-                    // Calendar Days Grid
-                    Expanded(
+                  ),
+                  // Calendar Days Grid - no spacing between weekday header and grid
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(
+                        top: 4.0,
+                        bottom: 0.0,
+                        left: 20.0,
+                        right: 20.0,
+                      ),
                       child: GridView.builder(
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        padding: EdgeInsets.zero,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 7,
-                          childAspectRatio: 1,
+                          childAspectRatio: 46 / 52, // width: 46, height: 52
                           crossAxisSpacing: 4,
                           mainAxisSpacing: 4,
                         ),
@@ -356,17 +535,21 @@ class _CalendarPageState extends State<CalendarPage> {
                                 MaterialPageRoute(
                                   builder: (context) => MealSelectionPage(
                                     selectedDate: DateTime(_currentDate.year, _currentDate.month, dayNumber),
+                                    mealPlanId: _activeMealPlanId,
+                                    mealStatusMap: _mealStatus, // Pass the status map
                                   ),
                                 ),
                               );
                             },
                             child: Container(
+                              width: 46,
+                              height: 52,
                               decoration: BoxDecoration(
-                                color: const Color(0xFF2A2A2A),
+                                color: Colors.transparent,
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                  color: const Color(0xFF3A3A3A),
-                                  width: 1,
+                                  color: const Color(0xFF7A7A7A),
+                                  width: 0.94,
                                 ),
                               ),
                               child: Stack(
@@ -376,17 +559,23 @@ class _CalendarPageState extends State<CalendarPage> {
                                     Center(
                                       child: _buildMealStatusIcon(status),
                                     ),
-                                  // Day number at bottom (right in LTR, left in RTL)
+                                  // Day number positioned at bottom right
                                   Positioned(
                                     bottom: 4,
-                                    right: _isRTL ? null : 4,
-                                    left: _isRTL ? 4 : null,
-                                    child: Text(
-                                      dayNumber.toString(),
-                                      style: const TextStyle(
-                                        color: Color(0xFF9E9E9E),
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w500,
+                                    right: 4,
+                                      child: Text(
+                                        dayNumber.toString(),
+                                      style: GoogleFonts.onest(
+                                        color: const Color(0xFF7A7A7A).withOpacity(0.5),
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w800,
+                                        height: 23.58 / 10, // line-height: 23.58px / font-size: 10px
+                                        letterSpacing: 0,
+                                      ),
+                                      textAlign: TextAlign.right,
+                                      textHeightBehavior: const TextHeightBehavior(
+                                        applyHeightToFirstAscent: false,
+                                        applyHeightToLastDescent: false,
                                       ),
                                     ),
                                   ),
@@ -397,21 +586,55 @@ class _CalendarPageState extends State<CalendarPage> {
                         },
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
             
             // Legend Section
-            Container(
+            Transform.translate(
+              offset: const Offset(0, -50),
+              child: Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.only(left: 20, right: 20, top: 0, bottom: 20),
               decoration: const BoxDecoration(
-                color: Colors.black,
+                  color: Color(0xFF1B1B1B),
+                ),
+              child: Stack(
+                children: [
+                  // Background SVG with gradient
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: Container(
+                        width: 402,
+                        height: 292.70623779296875,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Color(0xFF2B2A2A),
+                              Color.fromRGBO(27, 27, 27, 0),
+                            ],
+                          ),
               ),
-              child: Column(
+                        child: SvgPicture.asset(
+                          'assets/svg/Rectanglecal.svg',
+                          width: 402,
+                          height: 292.70623779296875,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Content on top
+                  Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Row(
                     textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
@@ -464,41 +687,52 @@ class _CalendarPageState extends State<CalendarPage> {
                     ],
                   ),
                   
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
                   
-                  // Legend Items - Order matches the image: selected, choose, preparing, paused, delivered
-                  _buildLegendItem(_getText('mealSelected'), _buildLegendSelectedIcon()),
-                  const SizedBox(height: 12),
+                  // Legend Items - 2 column grid layout
+                  Row(
+                    textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Left Column
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: _isRTL ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                          children: [
                   _buildLegendItem(_getText('chooseMeal'), _buildMealStatusIcon('choose')),
                   const SizedBox(height: 12),
+                            _buildLegendItem(_getText('pausedMeal'), _buildMealStatusIcon('paused')),
+                            const SizedBox(height: 12),
+                            _buildLegendItem(_getText('mealDelivered'), _buildLegendDeliveredIcon()),
+                          ],
+                        ),
+                      ),
+                      // Vertical separator
+                      Container(
+                        width: 1,
+                        margin: const EdgeInsets.symmetric(horizontal: 16),
+                        color: const Color(0xFF595959),
+                      ),
+                      // Right Column
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: _isRTL ? CrossAxisAlignment.start : CrossAxisAlignment.end,
+                          children: [
+                  _buildLegendItem(_getText('mealSelected'), _buildLegendSelectedIcon()),
+                  const SizedBox(height: 12),
                   _buildLegendItem(_getText('preparingMeal'), _buildMealStatusIcon('preparing')),
-                  const SizedBox(height: 12),
-                  _buildLegendItem(_getText('pausedMeal'), _buildMealStatusIcon('paused')),
-                  const SizedBox(height: 12),
-                  _buildLegendItem(_getText('mealDelivered'), _buildLegendDeliveredIcon()),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
+                  ),
+                ],
+              ),
               ),
             ),
           ],
-        ),
-      ),
-      bottomNavigationBar: CustomBottomNavigationBar(
-        initialIndex: 1,
-        onItemTapped: (index) {
-          if (index == 0) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(
-                builder: (context) => const HomePage(),
-              ),
-            );
-          } else if (index == 2) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(
-                builder: (context) => const AccountPage(),
-              ),
-            );
-          }
-        },
       ),
     );
   }
@@ -507,10 +741,24 @@ class _CalendarPageState extends State<CalendarPage> {
     return Row(
       textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
       children: [
-        SizedBox(
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: const Color(0xFF2A2A2A),
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: const Color(0xFF595959),
+              width: 1.26,
+            ),
+          ),
+          child: Center(
+            child: SizedBox(
           width: 24,
           height: 24,
           child: iconWidget,
+            ),
+          ),
         ),
         const SizedBox(width: 12),
         Text(
@@ -525,48 +773,27 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   Widget _buildLegendSelectedIcon() {
-    // Grey cloche with green checkmark (matches calendar icon)
-    return Stack(
-      children: [
-        const Icon(
-          Icons.restaurant_menu,
-          color: Color(0xFF9E9E9E),
-          size: 20,
-        ),
-        Positioned(
-          top: -2,
-          right: -2,
-          child: Container(
-            width: 8,
-            height: 8,
-            decoration: const BoxDecoration(
-              color: Colors.green,
-              shape: BoxShape.circle,
+    // Meal selected icon using meal.svg
+    return Center(
+      child: SvgPicture.asset(
+        'assets/svg/meal.svg',
+        width: 24,
+        height: 24,
+        fit: BoxFit.contain,
+        alignment: Alignment.center,
             ),
-            child: const Icon(
-              Icons.check,
-              color: Colors.white,
-              size: 6,
-            ),
-          ),
-        ),
-      ],
     );
   }
 
   Widget _buildLegendDeliveredIcon() {
-    // Blue square with white checkmark (as shown in legend)
-    return Container(
-      width: 20,
-      height: 20,
-      decoration: const BoxDecoration(
-        color: Color(0xFF2196F3),
-        borderRadius: BorderRadius.all(Radius.circular(4)),
-      ),
-      child: const Icon(
-        Icons.check,
-        color: Colors.white,
-        size: 14,
+    // Meal delivered icon using mealdel.svg
+    return Center(
+      child: SvgPicture.asset(
+        'assets/svg/mealdel.svg',
+        width: 24,
+        height: 24,
+        fit: BoxFit.contain,
+        alignment: Alignment.center,
       ),
     );
   }
@@ -575,81 +802,59 @@ class _CalendarPageState extends State<CalendarPage> {
   Widget _buildMealStatusIcon(String status) {
     switch (status) {
       case 'selected':
-        // Grey cloche (restaurant menu) with green checkmark
-        return Stack(
-          children: [
-            const Icon(
-              Icons.restaurant_menu,
-              color: Color(0xFF9E9E9E),
-              size: 20,
-            ),
-            Positioned(
-              top: -2,
-              right: -2,
-              child: Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(
-                  color: Colors.green,
-                  shape: BoxShape.circle,
+        // Meal selected icon using meal.svg
+        return Center(
+          child: SvgPicture.asset(
+            'assets/svg/meal.svg',
+            width: 24,
+            height: 24,
+            fit: BoxFit.contain,
+            alignment: Alignment.center,
                 ),
-                child: const Icon(
-                  Icons.check,
-                  color: Colors.white,
-                  size: 6,
-                ),
-              ),
-            ),
-          ],
         );
       case 'preparing':
-        // Red steaming bowl icon
-        return const Icon(
-          Icons.soup_kitchen,
-          color: Colors.red,
-          size: 24,
+        // Preparing meal icon using preparing.svg
+        return Center(
+          child: SvgPicture.asset(
+            'assets/svg/preparing.svg',
+            width: 24,
+            height: 24,
+            fit: BoxFit.contain,
+            alignment: Alignment.center,
+                ),
         );
       case 'paused':
-        // White pause icon (two vertical bars)
-        return const Icon(
-          Icons.pause,
-          color: Colors.white,
-          size: 20,
+        // Pause meal icon using pause.svg
+        return Center(
+          child: SvgPicture.asset(
+            'assets/svg/pause.svg',
+            width: 24,
+            height: 24,
+            fit: BoxFit.contain,
+            alignment: Alignment.center,
+          ),
         );
       case 'delivered':
-        // White cloche (food cover) with green checkmark
-        return Stack(
-          children: [
-            const Icon(
-              Icons.restaurant_menu,
-              color: Colors.white,
-              size: 20,
-            ),
-            Positioned(
-              top: -2,
-              right: -2,
-              child: Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(
-                  color: Colors.green,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.check,
-                  color: Colors.white,
-                  size: 6,
-                ),
-              ),
-            ),
-          ],
+        // Meal delivered icon using mealdel.svg
+        return Center(
+          child: SvgPicture.asset(
+            'assets/svg/mealdel.svg',
+            width: 24,
+            height: 24,
+            fit: BoxFit.contain,
+            alignment: Alignment.center,
+          ),
         );
       case 'choose':
-        // Orange hand tapping icon
-        return const Icon(
-          Icons.touch_app,
-          color: Color(0xFFFF6B35),
-          size: 20,
+        // Orange hand tapping icon - using choose.svg
+        return Center(
+          child: SvgPicture.asset(
+            'assets/svg/choose.svg',
+            width: 24,
+            height: 24,
+            fit: BoxFit.contain,
+            alignment: Alignment.center,
+          ),
         );
       default:
         return const SizedBox();
